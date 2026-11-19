@@ -1,17 +1,26 @@
 {
   "expo": {
-    "name": "preach-radio-mobile",
+    "name": "Preach Radio",
     "slug": "preach-radio-mobile",
+    "scheme": "preachradio",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0B0B0E",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.preachradio.app",
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"],
+        "NSPhotoLibraryUsageDescription": "Choose a profile photo or a cover for your messages.",
+        "NSMicrophoneUsageDescription": "Record audio messages and go live."
+      }
     },
     "android": {
+      "package": "com.preachradio.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0B0B0E",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -20,6 +29,25 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-image",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B0B0E"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a profile photo or a cover for your messages."
+        }
+      ]
+    ]
   }
 }
