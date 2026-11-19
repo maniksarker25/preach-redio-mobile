@@ -12,7 +12,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.preachradio.app",
       "infoPlist": {
-        "UIBackgroundModes": ["audio"],
+        "UIBackgroundModes": [
+          "audio"
+        ],
         "NSPhotoLibraryUsageDescription": "Choose a profile photo or a cover for your messages.",
         "NSMicrophoneUsageDescription": "Record audio messages and go live."
       }
@@ -47,7 +49,8 @@
         {
           "photosPermission": "Choose a profile photo or a cover for your messages."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ]
   }
 }

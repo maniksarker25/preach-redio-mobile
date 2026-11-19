@@ -5,8 +5,8 @@
 export const env = {
   apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://api.preachradio.com',
   /**
-   * While true, repositories serve mock data and no network request is made.
-   * Flip to false once the HTTP repositories are implemented.
+   * Content (home feed, podcasts, stations…) is still mocked until those
+   * HTTP repositories are written. Set EXPO_PUBLIC_USE_MOCKS=false once they exist.
    */
   useMocks: process.env.EXPO_PUBLIC_USE_MOCKS !== 'false',
 } as const;

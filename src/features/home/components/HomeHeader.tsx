@@ -8,7 +8,8 @@ import { logoMark } from '@/assets';
 import { AppText } from '@/components/common/AppText';
 import { Touchable } from '@/components/common/Touchable';
 import { useNotifications } from '@/hooks/queries';
-import { useSessionStore } from '@/store/sessionStore';
+import { useAppSelector } from '@/store/hooks';
+import { selectProfile } from '@/store/slices/authSlice';
 import { colors, GUTTER } from '@/theme';
 import { greeting } from '@/utils/format';
 
@@ -37,7 +38,7 @@ const RoundAction = ({ icon: Icon, label, badge, onPress }: { icon: LucideIcon; 
 /** Home header: brand badge + personal greeting on the left, search and notifications on the right. */
 export const HomeHeader = memo(function HomeHeader() {
   const navigation = useNavigation();
-  const profile = useSessionStore((s) => s.session?.profile);
+  const profile = useAppSelector(selectProfile);
   const { data: notifications } = useNotifications();
   const unread = notifications?.filter((n) => !n.seenBy.includes(profile?._id ?? '')).length ?? 0;
   const firstName = profile?.name.split(' ')[0] ?? 'there';

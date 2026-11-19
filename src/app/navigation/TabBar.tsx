@@ -8,7 +8,8 @@ import { Avatar } from '@/components/common/Avatar';
 import { Touchable } from '@/components/common/Touchable';
 import { MiniPlayer } from '@/components/media/MiniPlayer';
 import { TAB_BAR_HEIGHT } from '@/hooks/useBottomSpace';
-import { useSessionStore } from '@/store/sessionStore';
+import { useAppSelector } from '@/store/hooks';
+import { selectProfile } from '@/store/slices/authSlice';
 import { colors } from '@/theme';
 import type { MainTabParamList } from './types';
 
@@ -19,7 +20,7 @@ const ICONS: Partial<Record<keyof MainTabParamList, { icon: LucideIcon; label: s
 };
 
 const ProfileIcon = ({ focused }: { focused: boolean }) => {
-  const profile = useSessionStore((s) => s.session?.profile);
+  const profile = useAppSelector(selectProfile);
   return (
     <View className="rounded-full" style={{ borderWidth: 2, borderColor: focused ? colors.white : 'transparent', padding: 1 }}>
       <Avatar uri={profile?.profile_image} name={profile?.name ?? 'You'} size={28} />

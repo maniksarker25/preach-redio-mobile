@@ -25,7 +25,7 @@ export function ReelsViewerScreen({ route, navigation }: RootScreenProps<'ReelsV
 
   return (
     <Screen safeTop={false} className="bg-black">
-      {all.isPending ? (
+      {all.isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color={colors.white} />
         </View>

@@ -11,7 +11,8 @@ import { Touchable } from '@/components/common/Touchable';
 import { ScreenHeader } from '@/components/layouts/ScreenHeader';
 import { Screen } from '@/components/layouts/Screen';
 import { useContentPage, useFaqs } from '@/hooks/queries';
-import { useSessionStore } from '@/store/sessionStore';
+import { useAppSelector } from '@/store/hooks';
+import { selectProfile } from '@/store/slices/authSlice';
 import { colors, GUTTER } from '@/theme';
 import { timeAgo } from '@/utils/format';
 
@@ -23,7 +24,7 @@ export function ContentPageScreen({ route }: RootScreenProps<'ContentPage'>) {
   return (
     <Screen>
       <ScreenHeader title={page.data?.title} />
-      {page.isPending ? (
+      {page.isLoading ? (
         <View style={{ padding: GUTTER, gap: 10 }}>
           {[0, 1, 2, 3, 4].map((i) => (
             <Skeleton key={i} width={i % 2 ? '85%' : '100%'} height={14} />
@@ -77,7 +78,7 @@ export function FaqScreen({ navigation }: RootScreenProps<'Faq'>) {
         <ErrorState onRetry={() => void faqs.refetch()} />
       ) : (
         <ScrollView contentContainerStyle={{ padding: GUTTER, gap: 10, paddingBottom: 48 }}>
-          {faqs.isPending ? [0, 1, 2].map((i) => <Skeleton key={i} width="100%" height={58} />) : faqs.data?.map((f) => <FaqItemView key={f._id} q={f.question} a={f.answer} />)}
+          {faqs.isLoading ? [0, 1, 2].map((i) => <Skeleton key={i} width="100%" height={58} />) : faqs.data?.map((f) => <FaqItemView key={f._id} q={f.question} a={f.answer} />)}
           <View className="mt-6 items-center">
             <AppText variant="bodySm" tone="muted">
               Still need help?
@@ -92,7 +93,7 @@ export function FaqScreen({ navigation }: RootScreenProps<'Faq'>) {
 
 /** Contact form — posts to `/contact-us` once connected. */
 export function SupportScreen({ navigation }: RootScreenProps<'Support'>) {
-  const profile = useSessionStore((s) => s.session?.profile);
+  const profile = useAppSelector(selectProfile);
   const [name, setName] = useState(profile?.name ?? '');
   const [email, setEmail] = useState(profile?.email ?? '');
   const [message, setMessage] = useState('');

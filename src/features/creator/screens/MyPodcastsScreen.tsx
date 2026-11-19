@@ -26,7 +26,7 @@ const TABS = [
 export function MyPodcastsScreen({ navigation }: RootScreenProps<'MyPodcasts'>) {
   const [type, setType] = useState<'episode' | 'clip'>('episode');
   const list = useMyPodcasts(type);
-  const remove = useDeletePodcast();
+  const [deletePodcast] = useDeletePodcast();
   const { play, openDetail } = useMediaActions();
 
   const totals = (list.data ?? []).reduce((acc, p) => ({ views: acc.views + p.totalView, likes: acc.likes + p.totalLikes }), { views: 0, likes: 0 });
@@ -40,7 +40,7 @@ export function MyPodcastsScreen({ navigation }: RootScreenProps<'MyPodcasts'>) 
         onPress: () =>
           Alert.alert('Delete this message?', 'Its likes, comments and bookmarks are deleted too.', [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Delete', style: 'destructive', onPress: () => remove.mutate(p._id) },
+            { text: 'Delete', style: 'destructive', onPress: () => void deletePodcast(p._id) },
           ]),
       },
       { text: 'Cancel', style: 'cancel' },
@@ -74,7 +74,7 @@ export function MyPodcastsScreen({ navigation }: RootScreenProps<'MyPodcasts'>) 
         </View>
         <SegmentedTabs tabs={TABS} value={type} onChange={setType} />
       </View>
-      {list.isPending ? (
+      {list.isLoading ? (
         <ListSkeleton />
       ) : list.isError ? (
         <ErrorState onRetry={() => void list.refetch()} />

@@ -63,6 +63,6 @@ export const currentProfile: NormalUserProfile = {
   profile_image: portrait(33),
   profile_cover: artwork('me-cover', 1200, 600),
   address: 'Atlanta, GA',
-  gender: 'male',
+  gender: 'Male',
   dateOfBirth: '1994-05-14T00:00:00.000Z',
 };

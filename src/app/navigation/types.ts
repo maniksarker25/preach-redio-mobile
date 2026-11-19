@@ -8,7 +8,8 @@ import type { ContentPageKey, PodcastMediaType } from '@/types/models';
 export type AuthStackParamList = {
   Login: undefined;
   SignUp: undefined;
-  VerifyCode: { email: string; purpose: 'signup' | 'reset'; role?: 'user' | 'creator' };
+  /** `resend`: send a fresh code on open (e.g. unverified account at login). */
+  VerifyCode: { email: string; purpose: 'signup' | 'reset'; resend?: boolean };
   ForgotPassword: undefined;
   ResetPassword: { email: string };
 };

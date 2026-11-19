@@ -157,7 +157,7 @@ export function StationDetailScreen({ route }: RootScreenProps<'StationDetail'>)
         </View>
 
         {tab === 'messages' ? (
-          episodes.isPending ? (
+          episodes.isLoading ? (
             <ListSkeleton rows={4} />
           ) : episodes.data?.length ? (
             episodes.data.map((p) => <EpisodeRow key={p._id} podcast={p} hideOwner onPress={openDetail} onPlay={(x) => play(x, episodes.data)} />)

@@ -100,9 +100,9 @@ export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: bottom }}
-        refreshControl={<RefreshControl refreshing={feed.isRefetching} onRefresh={onRefresh} tintColor={colors.white} />}
+        refreshControl={<RefreshControl refreshing={feed.isFetching} onRefresh={onRefresh} tintColor={colors.white} />}
       >
-        {feed.isPending ? (
+        {feed.isLoading ? (
           <HomeSkeleton />
         ) : feed.isError || !data ? (
           <ErrorState onRetry={() => void feed.refetch()} />

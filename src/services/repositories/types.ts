@@ -11,14 +11,12 @@ import type {
   ContentPageKey,
   FaqItem,
   HomeData,
-  NormalUserProfile,
   Podcast,
   PodcastMediaType,
   PodcastType,
   SourcePodcastRef,
   StreamRoom,
   SubCategory,
-  User,
 } from '@/types/models';
 
 /**
@@ -109,18 +107,3 @@ export interface ContentRepository {
   faqs(): Promise<FaqItem[]>;
 }
 
-export interface Session {
-  accessToken: string;
-  user: User;
-  profile: NormalUserProfile;
-}
-
-export interface AuthRepository {
-  login(email: string, password: string): Promise<Session>;
-  register(input: { name: string; email: string; password: string; role: 'user' | 'creator' }): Promise<{ email: string }>;
-  verifyCode(email: string, code: string): Promise<Session>;
-  forgotPassword(email: string): Promise<void>;
-  verifyResetCode(email: string, code: string): Promise<void>;
-  resetPassword(email: string, password: string): Promise<void>;
-  changePassword(oldPassword: string, newPassword: string): Promise<void>;
-}

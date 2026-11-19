@@ -28,7 +28,9 @@ import { ReelsViewerScreen } from '@/features/reels/screens/ReelsScreens';
 import { ChangePasswordScreen } from '@/features/settings/screens/ChangePasswordScreen';
 import { ContentPageScreen, FaqScreen, SupportScreen } from '@/features/settings/screens/InfoScreens';
 import { SettingsScreen } from '@/features/settings/screens/SettingsScreen';
-import { useSessionStore } from '@/store/sessionStore';
+import { useGetMyProfileQuery } from '@/store/api/authApi';
+import { useAppSelector } from '@/store/hooks';
+import { selectHasOnboarded, selectIsAuthenticated } from '@/store/slices/authSlice';
 import { colors } from '@/theme';
 import { AuthNavigator } from './AuthNavigator';
 import { MainTabs } from './MainTabs';
@@ -45,8 +47,10 @@ const modal: NativeStackNavigationOptions = { presentation: 'modal', animation: 
  * modal screen. Switching `session` swaps the whole tree (no back into auth).
  */
 export function RootNavigator() {
-  const signedIn = useSessionStore((s) => s.session !== null);
-  const hasOnboarded = useSessionStore((s) => s.hasOnboarded);
+  const signedIn = useAppSelector(selectIsAuthenticated);
+  const hasOnboarded = useAppSelector(selectHasOnboarded);
+  // Refresh the saved profile on launch; an expired session is refreshed or logged out by the base query.
+  useGetMyProfileQuery(undefined, { skip: !signedIn });
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', contentStyle: { backgroundColor: colors.ink[900] } }}>

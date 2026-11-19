@@ -1,9 +1,9 @@
 # Preach Radio — Mobile (React Native)
 
-The new Preach Radio app. It rebuilds the Flutter app in `../potcast_app` with the **same screens, tabs, home sections and content**, refined visually (Flutter colours #1E2122 / #2A2B31 / #E6A7A8 and its Roboto fonts). **Frontend only — every screen runs on mock data; no API is called yet.**
+The new Preach Radio app. It rebuilds the Flutter app in `../potcast_app` with the **same screens, tabs, home sections and content**, refined visually (Flutter colours #1E2122 / #2A2B31 / #E6A7A8 and its Roboto fonts). **Authentication uses the real API (https://api.preachradio.com); all other content still runs on mock data.**
 
 Expo SDK 58 · React Native 0.88 · TypeScript (strict) · NativeWind 4 · React Navigation 7 · Reanimated 4 ·
-Gesture Handler · FlashList 2 · TanStack Query 5 · Zustand 5 · expo-image · Lucide.
+Gesture Handler · FlashList 2 · Redux Toolkit + RTK Query + redux-persist · Zustand 5 (player/library) · expo-image · Lucide.
 
 Tabs (as in Flutter): Home · History · Favorite · Profile; creators also get a “+” create tab.
 Home order: header (logo + search) · hero (admin banners) · category row · Top Favorites · Features · Just In · Faith Hits · Praise Clips · Series · Streaming Record. The app uses categories only (no sub-categories in the UI); uploads send the category's first sub-category because the API still requires one.
@@ -19,8 +19,7 @@ npx expo-doctor         # dependency/config checks
 
 Every native module used ships in Expo Go. If you add one that doesn't, use a development build (`npx expo run:android|ios`).
 
-**Demo sign-in:** any email + a 6-character password. An email starting with `creator` signs in as a creator.
-OTP: any 6 digits except `000000`. In the app, Settings → *Creator mode (demo)* toggles the creator experience.
+**Sign in:** use a real Preach Radio account, or sign up in the app (a 6-digit code is emailed). Listener and creator accounts are supported; admin accounts are pointed to the dashboard.
 
 ## Structure
 
@@ -39,8 +38,11 @@ src/
     mock/         Mock data shaped exactly like the backend responses
     repositories/ Interfaces + mock implementations; index.ts is the only switch between mock and HTTP
     playback/     PlaybackEngine interface + timer-based mock engine
-  store/          Zustand: session (persisted), library (likes, bookmarks, history, progress, playlists; persisted), player
-  hooks/          React Query hooks + query keys, media routing, layout helpers
+  store/          Redux: index.ts (store + redux-persist), hooks.ts (typed hooks), slices/authSlice.ts (session),
+                  api/baseApi.ts (RTK Query base: envelope unwrap, error normalising, 401 → refresh → retry/logout),
+                  api/authApi.ts (real auth endpoints), api/contentApi.ts (content endpoints, mock-backed for now).
+                  Zustand: playerStore (playback) and libraryStore (likes, history, playlists; device-local).
+  hooks/          queries.ts (screen-facing wrappers over the RTK Query endpoints), media routing, layout helpers
   theme/          Design tokens (shared with tailwind.config.js) and spacing/shadows
   types/          Domain models mirroring the backend, API envelope/pagination types
   utils/          Formatting, podcast helpers, share, pickers
@@ -63,14 +65,8 @@ src/
 Rules mirrored in the UI: play `hlsUrl ?? podcast_url`; covers are optional (branded fallback);
 duration prefers `durationSeconds` over the legacy minutes.seconds value; hidden/deleted podcasts may come back as `null`.
 
-## Connecting the backend
+## API integration
 
-1. Add `src/services/repositories/http.ts` implementing the interfaces in `repositories/types.ts`
-   with `apiRequest()` and `endpoints`.
-2. Return those from `repositories/index.ts` when `env.useMocks` is false and set `EXPO_PUBLIC_USE_MOCKS=false`.
-3. Sync the library store's actions (like, bookmark, playlist CRUD) to their endpoints.
-4. Replace `createMockEngine()` with a real engine: react-native-track-player or expo-audio for audio,
-   expo-video in the player, `VideoStage` and `ReelItem`, and the 100ms SDK for live rooms and Go Live.
-5. Replace the simulated purchase in `SubscriptionScreen` with RevenueCat.
-
-Screens, hooks and query keys don't change.
+- **Done — authentication** (`src/store/api/authApi.ts`): login, sign-up, email verification + resend, forgot / verify / reset password, change password, delete account, get my profile. The session (access + refresh token, user, profile) is persisted with redux-persist. Expired access tokens are refreshed automatically via `/auth/refresh-token` (refresh token sent as the `refreshToken` cookie); if that fails the user is logged out.
+- **Next — content**: each endpoint in `src/store/api/contentApi.ts` uses a mock `queryFn`. Replace it with `query: () => endpoints.…` (+ `transformResponse` if needed). Hooks, cache tags and screens stay the same.
+- Playback: replace `createMockEngine()` with a real engine (react-native-track-player / expo-audio, expo-video, 100ms for live). Purchases: RevenueCat.

@@ -10,7 +10,8 @@ import { Button } from '@/components/common/Button';
 import { Touchable } from '@/components/common/Touchable';
 import { ScreenHeader } from '@/components/layouts/ScreenHeader';
 import { Screen } from '@/components/layouts/Screen';
-import { useSessionStore } from '@/store/sessionStore';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { premiumChanged, selectIsPremium } from '@/store/slices/authSlice';
 import { colors, GUTTER } from '@/theme';
 import { cn } from '@/utils/podcast';
 
@@ -29,8 +30,9 @@ const BENEFITS: { icon: LucideIcon; title: string; body: string }[] = [
 
 export function SubscriptionScreen({ navigation }: RootScreenProps<'Subscription'>) {
   const insets = useSafeAreaInsets();
-  const isPremium = useSessionStore((s) => s.isPremium);
-  const setPremium = useSessionStore((s) => s.setPremium);
+  const isPremium = useAppSelector(selectIsPremium);
+  const dispatch = useAppDispatch();
+  const setPremium = (v: boolean) => dispatch(premiumChanged(v));
   const [plan, setPlan] = useState<(typeof PLANS)[number]['id']>('annual');
   const [busy, setBusy] = useState(false);
 

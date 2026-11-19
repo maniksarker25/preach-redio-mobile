@@ -10,21 +10,23 @@ import { TextField } from '@/components/common/TextField';
 import { Touchable } from '@/components/common/Touchable';
 import { ScreenHeader } from '@/components/layouts/ScreenHeader';
 import { Screen } from '@/components/layouts/Screen';
-import { useSessionStore } from '@/store/sessionStore';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { profilePatched, selectProfile } from '@/store/slices/authSlice';
 import { colors, GUTTER } from '@/theme';
 import type { Gender } from '@/types/models';
 import { pickImage } from '@/utils/pickers';
 
 const GENDERS: { key: Gender; label: string }[] = [
-  { key: 'male', label: 'Male' },
-  { key: 'female', label: 'Female' },
-  { key: 'other', label: 'Other' },
+  { key: 'Male', label: 'Male' },
+  { key: 'Female', label: 'Female' },
+  { key: 'Other', label: 'Other' },
 ];
 
 /** Profile form mirroring `normalUser` fields (`/normal-user/update-profile`). */
 export function EditProfileScreen({ navigation }: RootScreenProps<'EditProfile'>) {
-  const profile = useSessionStore((s) => s.session?.profile);
-  const updateProfile = useSessionStore((s) => s.updateProfile);
+  const profile = useAppSelector(selectProfile);
+  const dispatch = useAppDispatch();
+  const updateProfile = (patch: Parameters<typeof profilePatched>[0]) => dispatch(profilePatched(patch));
   const [name, setName] = useState(profile?.name ?? '');
   const [phone, setPhone] = useState(profile?.phone ?? '');
   const [address, setAddress] = useState(profile?.address ?? '');

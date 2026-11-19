@@ -67,7 +67,7 @@ export function PodcastDetailScreen({ route, navigation }: RootScreenProps<'Podc
   }));
 
   const p = query.data;
-  if (query.isPending) {
+  if (query.isLoading) {
     return (
       <Screen>
         <ScreenHeader />

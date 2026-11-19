@@ -43,7 +43,7 @@ export function StationsScreen({ navigation }: RootScreenProps<'Stations'>) {
         <SearchField value={term} onChangeText={setTerm} placeholder="Find a station or preacher" />
         <SegmentedTabs tabs={FILTERS} value={filter} onChange={setFilter} />
       </View>
-      {list.isPending ? (
+      {list.isLoading ? (
         <ListSkeleton />
       ) : list.isError ? (
         <ErrorState onRetry={() => void list.refetch()} />

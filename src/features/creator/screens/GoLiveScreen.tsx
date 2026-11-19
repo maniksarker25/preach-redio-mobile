@@ -15,7 +15,8 @@ import { ScreenHeader } from '@/components/layouts/ScreenHeader';
 import { Screen } from '@/components/layouts/Screen';
 import { Artwork } from '@/components/media/Artwork';
 import { Equalizer } from '@/components/media/Equalizer';
-import { useSessionStore } from '@/store/sessionStore';
+import { useAppSelector } from '@/store/hooks';
+import { selectProfile } from '@/store/slices/authSlice';
 import { colors, GUTTER } from '@/theme';
 import { formatClock } from '@/utils/format';
 import { pickImage } from '@/utils/pickers';
@@ -28,7 +29,7 @@ type Phase = 'setup' | 'connecting' | 'live';
  */
 export function GoLiveScreen({ navigation }: RootScreenProps<'GoLive'>) {
   const insets = useSafeAreaInsets();
-  const profile = useSessionStore((s) => s.session?.profile);
+  const profile = useAppSelector(selectProfile);
   const [phase, setPhase] = useState<Phase>('setup');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');

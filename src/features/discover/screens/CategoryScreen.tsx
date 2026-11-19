@@ -33,7 +33,7 @@ export function CategoryScreen({ route }: RootScreenProps<'Category'>) {
       <View className="pb-4" style={{ paddingHorizontal: GUTTER }}>
         <SegmentedTabs tabs={SORTS} value={sort} onChange={setSort} />
       </View>
-      {list.isPending ? (
+      {list.isLoading ? (
         <GridSkeleton />
       ) : list.isError ? (
         <ErrorState onRetry={() => void list.refetch()} />

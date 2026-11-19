@@ -12,7 +12,8 @@ import { ListSkeleton } from '@/components/layouts/ListSkeleton';
 import { ScreenHeader } from '@/components/layouts/ScreenHeader';
 import { Screen } from '@/components/layouts/Screen';
 import { useNotifications } from '@/hooks/queries';
-import { useSessionStore } from '@/store/sessionStore';
+import { useAppSelector } from '@/store/hooks';
+import { selectProfile } from '@/store/slices/authSlice';
 import { colors, GUTTER } from '@/theme';
 import type { AppNotification, NotificationType } from '@/types/models';
 import { timeAgo } from '@/utils/format';
@@ -26,7 +27,7 @@ const ICONS: Record<NotificationType, { icon: LucideIcon; tint: string }> = {
 
 export function NotificationsScreen({ navigation }: RootScreenProps<'Notifications'>) {
   const list = useNotifications();
-  const me = useSessionStore((s) => s.session?.profile._id ?? '');
+  const me = useAppSelector(selectProfile)?._id ?? '';
   const [readLocally, setReadLocally] = useState<Set<string>>(new Set());
   const isUnread = (n: AppNotification) => !n.seenBy.includes(me) && !readLocally.has(n._id);
   const unread = list.data?.filter(isUnread).length ?? 0;
@@ -47,7 +48,7 @@ export function NotificationsScreen({ navigation }: RootScreenProps<'Notificatio
         title="Notifications"
         right={unread ? <Button label="Mark all read" size="sm" variant="ghost" onPress={() => setReadLocally(new Set(list.data?.map((n) => n._id)))} /> : null}
       />
-      {list.isPending ? (
+      {list.isLoading ? (
         <ListSkeleton rows={5} />
       ) : list.isError ? (
         <ErrorState onRetry={() => void list.refetch()} />

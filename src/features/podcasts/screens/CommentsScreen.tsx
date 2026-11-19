@@ -11,7 +11,8 @@ import { Touchable } from '@/components/common/Touchable';
 import { ScreenHeader } from '@/components/layouts/ScreenHeader';
 import { Screen } from '@/components/layouts/Screen';
 import { useAddComment, useComments } from '@/hooks/queries';
-import { useSessionStore } from '@/store/sessionStore';
+import { useAppSelector } from '@/store/hooks';
+import { selectProfile } from '@/store/slices/authSlice';
 import { colors, fonts, GUTTER } from '@/theme';
 import type { Comment } from '@/types/models';
 import { timeAgo } from '@/utils/format';
@@ -46,14 +47,14 @@ export function CommentsScreen({ route }: RootScreenProps<'Comments'>) {
   const { podcastId } = route.params;
   const insets = useSafeAreaInsets();
   const comments = useComments(podcastId);
-  const addComment = useAddComment(podcastId);
-  const profile = useSessionStore((s) => s.session?.profile);
+  const [addComment] = useAddComment();
+  const profile = useAppSelector(selectProfile);
   const [text, setText] = useState('');
 
   const submit = () => {
     const value = text.trim();
     if (!value || !profile) return;
-    addComment.mutate({ text: value, author: { _id: profile._id, name: profile.name, profile_image: profile.profile_image } });
+    void addComment({ podcastId, text: value, author: { _id: profile._id, name: profile.name, profile_image: profile.profile_image } });
     setText('');
   };
 
@@ -64,7 +65,7 @@ export function CommentsScreen({ route }: RootScreenProps<'Comments'>) {
       </View>
       <ScreenHeader back="down" title="Comments" subtitle={comments.data ? `${comments.data.length} comments` : undefined} />
       <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={60}>
-        {comments.isPending ? (
+        {comments.isLoading ? (
           <View style={{ padding: GUTTER, gap: 22 }}>
             {[0, 1, 2, 3].map((i) => (
               <View key={i} className="flex-row">

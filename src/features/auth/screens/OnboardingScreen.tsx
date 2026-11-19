@@ -7,17 +7,18 @@ import { introImage, logoWordmark } from '@/assets';
 import { AppText } from '@/components/common/AppText';
 import { Button } from '@/components/common/Button';
 import { Screen } from '@/components/layouts/Screen';
-import { useSessionStore } from '@/store/sessionStore';
+import { useAppDispatch } from '@/store/hooks';
+import { onboardingCompleted } from '@/store/slices/authSlice';
 import { GUTTER } from '@/theme';
 
 /** Flutter `IntroScreen`: collage on top, black panel with the tagline and "Get Started". */
 export function OnboardingScreen({ navigation }: RootScreenProps<'Onboarding'>) {
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const completeOnboarding = useSessionStore((s) => s.completeOnboarding);
+  const dispatch = useAppDispatch();
 
   const start = () => {
-    completeOnboarding();
+    dispatch(onboardingCompleted());
     navigation.replace('Auth', { screen: 'Login' });
   };
 

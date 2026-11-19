@@ -65,7 +65,7 @@ export function RecordPlayerScreen({ route, navigation }: RootScreenProps<'Recor
             </AppText>
           ) : null}
           {owner.data ? (
-            <Touchable onPress={() => navigation.navigate('StationDetail', { id: owner.data.id })} className="mt-5 flex-row items-center rounded-sm bg-ink-800 p-3" accessibilityLabel={`Open ${owner.data.name}`}>
+            <Touchable onPress={() => owner.data && navigation.navigate('StationDetail', { id: owner.data.id })} className="mt-5 flex-row items-center rounded-sm bg-ink-800 p-3" accessibilityLabel={`Open ${owner.data.name}`}>
               <Avatar uri={owner.data.avatar} name={owner.data.name} size={40} />
               <AppText variant="title" className="ml-3 flex-1">
                 {owner.data.name}

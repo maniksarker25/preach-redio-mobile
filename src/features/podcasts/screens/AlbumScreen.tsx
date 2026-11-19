@@ -25,7 +25,7 @@ export function AlbumScreen({ route }: RootScreenProps<'Album'>) {
   return (
     <Screen>
       <ScreenHeader title={a?.name} />
-      {album.isPending ? (
+      {album.isLoading ? (
         <GridSkeleton />
       ) : album.isError || !a ? (
         <ErrorState onRetry={() => void album.refetch()} />

@@ -15,7 +15,7 @@ import { Artwork } from '@/components/media/Artwork';
 import { ProgressLine } from '@/components/media/Seekbar';
 import { useCategories, useCreatePodcast, useSubCategories } from '@/hooks/queries';
 import { colors, GUTTER } from '@/theme';
-import { ApiError } from '@/types/api';
+import { getErrorMessage } from '@/utils/apiError';
 import type { PodcastType } from '@/types/models';
 import { formatClock } from '@/utils/format';
 import { formatBytes, pickAudio, pickImage, pickVideo, type PickedFile } from '@/utils/pickers';
@@ -42,7 +42,7 @@ export function UploadScreen({ route, navigation }: RootScreenProps<'Upload'>) {
   const categories = useCategories();
   const [category, setCategory] = useState<string>();
   const subs = useSubCategories(category);
-  const create = useCreatePodcast();
+  const [createPodcast, { isLoading: creating }] = useCreatePodcast();
 
   const [type, setType] = useState<PodcastType>('episode');
   const [file, setFile] = useState<PickedFile | null>(recording ? { uri: recording.uri, name: 'Recording.m4a', duration: recording.durationSeconds } : null);
@@ -94,7 +94,7 @@ export function UploadScreen({ route, navigation }: RootScreenProps<'Upload'>) {
       setProgress(Math.min(1, p));
     }
     try {
-      await create.mutateAsync({
+      await createPodcast({
         type: isClip ? 'clip' : 'episode',
         mediaType,
         title: title.trim(),
@@ -106,10 +106,10 @@ export function UploadScreen({ route, navigation }: RootScreenProps<'Upload'>) {
         address: address.trim() || undefined,
         fileUri: file.uri,
         coverUri: cover,
-      });
+      }).unwrap();
       setDone(true);
     } catch (err) {
-      setErrors({ submit: err instanceof ApiError ? err.message : 'Upload failed. Please try again.' });
+      setErrors({ submit: getErrorMessage(err, 'Upload failed. Please try again.') });
     } finally {
       setProgress(null);
     }
@@ -239,7 +239,7 @@ export function UploadScreen({ route, navigation }: RootScreenProps<'Upload'>) {
               {errors.submit}
             </AppText>
           ) : null}
-          <Button label="Publish" icon={UploadCloud} onPress={submit} loading={progress !== null || create.isPending} size="lg" />
+          <Button label="Publish" icon={UploadCloud} onPress={submit} loading={progress !== null || creating} size="lg" />
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>

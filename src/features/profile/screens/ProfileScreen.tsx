@@ -11,7 +11,9 @@ import { Artwork } from '@/components/media/Artwork';
 import { useBroadcasters } from '@/hooks/queries';
 import { useBottomSpace } from '@/hooks/useBottomSpace';
 import { usePlayerStore } from '@/store/playerStore';
-import { useIsCreator, useSessionStore } from '@/store/sessionStore';
+import { baseApi } from '@/store/api/baseApi';
+import { useAppDispatch, useAppSelector, useIsCreator } from '@/store/hooks';
+import { loggedOut, selectCreatorApproved, selectProfile } from '@/store/slices/authSlice';
 import { colors, GUTTER, shadow } from '@/theme';
 
 /** Flutter `ProfileStatusCard`: icon + label row on a dark card. */
@@ -28,9 +30,14 @@ const ProfileRow = ({ icon: Icon, label, onPress, danger }: { icon: LucideIcon; 
 /** Profile tab — same items and order as the Flutter `ProfileScreen` (listener / creator). */
 export function ProfileScreen({ navigation }: TabScreenProps<'Profile'>) {
   const bottom = useBottomSpace();
-  const profile = useSessionStore((s) => s.session?.profile);
+  const profile = useAppSelector(selectProfile);
+  const creatorApproved = useAppSelector(selectCreatorApproved);
+  const dispatch = useAppDispatch();
   const isCreator = useIsCreator();
-  const signOut = useSessionStore((s) => s.signOut);
+  const signOut = () => {
+    dispatch(loggedOut());
+    dispatch(baseApi.util.resetApiState());
+  };
   const stationId = useBroadcasters().data?.find((b) => b.kind === 'station')?.id;
 
   const confirmSignOut = () =>
@@ -78,6 +85,16 @@ export function ProfileScreen({ navigation }: TabScreenProps<'Profile'>) {
         </View>
 
         <View className="gap-2.5" style={{ paddingHorizontal: GUTTER }}>
+          {isCreator && creatorApproved === false ? (
+            <View className="mb-1 rounded-sm border border-gold/40 bg-gold/10 p-3.5">
+              <AppText variant="title" tone="gold">
+                Waiting for approval
+              </AppText>
+              <AppText variant="bodySm" tone="secondary" className="mt-0.5">
+                Our team is reviewing your creator account. You can publish once it’s approved.
+              </AppText>
+            </View>
+          ) : null}
           {isCreator ? (
             <>
               <ProfileRow icon={Pencil} label="Edit Profile" onPress={go.edit} />

@@ -17,7 +17,8 @@ export interface GeoPoint {
 /* ------------------------------------------------------------------ users */
 
 export type UserRole = 'user' | 'creator' | 'admin' | 'superAdmin';
-export type Gender = 'male' | 'female' | 'other';
+/** Backend `ENUM_GENDER` values. */
+export type Gender = 'Male' | 'Female' | 'Other';
 
 /** `user` module — the account record. */
 export interface User {

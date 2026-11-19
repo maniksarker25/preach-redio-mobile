@@ -19,7 +19,7 @@ export function PodcastListScreen({ route }: RootScreenProps<'PodcastList'>) {
   return (
     <Screen>
       <ScreenHeader title={title} />
-      {list.isPending ? (
+      {list.isLoading ? (
         <GridSkeleton />
       ) : list.isError ? (
         <ErrorState onRetry={() => void list.refetch()} />

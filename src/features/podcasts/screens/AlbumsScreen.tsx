@@ -21,7 +21,7 @@ export function AlbumsScreen({ navigation }: RootScreenProps<'Albums'>) {
   return (
     <Screen>
       <ScreenHeader title="Series" />
-      {albums.isPending ? (
+      {albums.isLoading ? (
         <GridSkeleton items={4} />
       ) : albums.isError ? (
         <ErrorState onRetry={() => void albums.refetch()} />

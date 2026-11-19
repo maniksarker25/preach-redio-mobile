@@ -4,7 +4,7 @@ import { HomeScreen } from '@/features/home/screens/HomeScreen';
 import { FavoriteScreen } from '@/features/library/screens/FavoriteScreen';
 import { HistoryScreen } from '@/features/library/screens/HistoryScreen';
 import { ProfileScreen } from '@/features/profile/screens/ProfileScreen';
-import { useIsCreator } from '@/store/sessionStore';
+import { useIsCreator } from '@/store/hooks';
 import { TabBar } from './TabBar';
 import type { MainTabParamList } from './types';
 

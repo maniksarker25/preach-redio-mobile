@@ -143,7 +143,7 @@ export function SearchScreen({ navigation }: RootScreenProps<'Search'>) {
             <Chip label={`Podcasts${counts.podcasts ? ` · ${counts.podcasts}` : ''}`} selected={filter === 'podcasts'} onPress={() => setFilter('podcasts')} />
             <Chip label={`Creators${counts.creators ? ` · ${counts.creators}` : ''}`} selected={filter === 'creators'} onPress={() => setFilter('creators')} />
           </View>
-          {search.isPending ? (
+          {search.isLoading ? (
             <ListSkeleton rows={6} />
           ) : search.isError ? (
             <ErrorState onRetry={() => void search.refetch()} />

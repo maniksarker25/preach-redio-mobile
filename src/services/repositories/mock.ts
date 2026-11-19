@@ -6,12 +6,11 @@ import { albums, banners } from '../mock/collections';
 import { commentsFor, contentPages, faqs, notifications } from '../mock/engagement';
 import { latency } from '../mock/helpers';
 import { previousLives, stationLive, stationTotalViews, topCreators } from '../mock/live';
-import { creatorById, currentProfile, currentUser, station } from '../mock/people';
+import { creatorById, station } from '../mock/people';
 import { podcastById, podcasts } from '../mock/podcasts';
 import { stationToBroadcaster, topCreatorToBroadcaster } from './mappers';
 import type {
   AlbumRepository,
-  AuthRepository,
   BroadcasterRepository,
   CatalogRepository,
   ContentRepository,
@@ -21,7 +20,6 @@ import type {
   PodcastDetail,
   PodcastQuery,
   PodcastRepository,
-  Session,
 } from './types';
 
 /* Hidden podcasts never leave the API; mirror that rule here. */
@@ -279,51 +277,3 @@ export const mockContentRepository: ContentRepository = {
   },
 };
 
-/* ----------------------------------------------------------------- auth */
-
-const session = (email: string, role: 'user' | 'creator' = 'user'): Session => ({
-  accessToken: `mock.${Date.now()}`,
-  user: { ...currentUser, email, role },
-  profile: { ...currentProfile, email },
-});
-
-const requireEmail = (email: string) => {
-  if (!/^\S+@\S+\.\S+$/.test(email)) throw new ApiError('Enter a valid email address', 400);
-};
-
-/** Accepts any well-formed input; code `000000` simulates a wrong OTP. */
-export const mockAuthRepository: AuthRepository = {
-  async login(email, password) {
-    await latency(700);
-    requireEmail(email);
-    if (password.length < 6) throw new ApiError('Incorrect email or password', 401);
-    return session(email, email.startsWith('creator') ? 'creator' : 'user');
-  },
-  async register({ email, password }) {
-    await latency(700);
-    requireEmail(email);
-    if (password.length < 8) throw new ApiError('Password must be at least 8 characters', 400);
-    return { email };
-  },
-  async verifyCode(email, code) {
-    await latency(600);
-    if (code === '000000' || code.length !== 6) throw new ApiError('That code is not correct', 400);
-    return session(email);
-  },
-  async forgotPassword(email) {
-    await latency(600);
-    requireEmail(email);
-  },
-  async verifyResetCode(_email, code) {
-    await latency(500);
-    if (code === '000000' || code.length !== 6) throw new ApiError('That code is not correct', 400);
-  },
-  async resetPassword(_email, password) {
-    await latency(600);
-    if (password.length < 8) throw new ApiError('Password must be at least 8 characters', 400);
-  },
-  async changePassword(_old, next) {
-    await latency(600);
-    if (next.length < 8) throw new ApiError('Password must be at least 8 characters', 400);
-  },
-};
