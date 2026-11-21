@@ -69,7 +69,11 @@ export const QueueCarousel = memo(function QueueCarousel({ queue, index, width, 
       ref={listRef}
       data={queue}
       horizontal
-      pagingEnabled
+      // One podcast per swipe, however hard the fling.
+      snapToInterval={width}
+      snapToAlignment="start"
+      disableIntervalMomentum
+      decelerationRate="fast"
       keyExtractor={(p) => p._id}
       showsHorizontalScrollIndicator={false}
       onMomentumScrollEnd={onMomentumEnd}

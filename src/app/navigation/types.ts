@@ -36,10 +36,12 @@ export type RootStackParamList = {
   Albums: undefined;
   Category: { id: string };
   Comments: { podcastId: string };
+  /** Live comment threads (Preach Clips). */
+  ClipComments: { podcastId: string };
   Search: undefined;
 
   // Clips & recordings
-  ReelsViewer: { startId: string; ids?: string[] };
+  ReelsViewer: { startId: string };
   RecordPlayer: { roomId: string };
 
   // Radio

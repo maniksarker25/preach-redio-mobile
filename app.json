@@ -50,7 +50,8 @@
           "photosPermission": "Choose a profile photo or a cover for your messages."
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-video"
     ]
   }
 }

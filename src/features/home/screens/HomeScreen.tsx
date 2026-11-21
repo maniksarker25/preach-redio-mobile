@@ -11,6 +11,7 @@ import { Screen } from '@/components/layouts/Screen';
 import { useBroadcasters, useHomeFeed, usePreviousLives } from '@/hooks/queries';
 import { useBottomSpace } from '@/hooks/useBottomSpace';
 import { useMediaActions } from '@/hooks/useMediaActions';
+import { useGetClipsInfiniteQuery } from '@/store/api/reelsApi';
 import { colors, GUTTER } from '@/theme';
 import type { Podcast } from '@/types/models';
 import { ownerName } from '@/utils/podcast';
@@ -39,6 +40,9 @@ export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   const records = usePreviousLives();
   const { play } = useMediaActions();
   const data = feed.data;
+  // Praise Clips come from the live clip feed (first page); the rest of home is still mock.
+  const clipFeed = useGetClipsInfiniteQuery();
+  const clips = clipFeed.data?.pages[0]?.result ?? [];
 
   /** Hero slides come from the admin banners; each links to a podcast or a series. */
   const hero = useMemo<HeroSlide[]>(() => {
@@ -84,7 +88,8 @@ export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
     void feed.refetch();
     void hosts.refetch();
     void records.refetch();
-  }, [feed, hosts, records]);
+    void clipFeed.refetch();
+  }, [feed, hosts, records, clipFeed]);
 
   return (
     <Screen>
@@ -149,10 +154,10 @@ export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
               <Rail data={data.popularPodcasts} keyExtractor={podcastKey} gap={8} renderItem={({ item }) => <MusicCard podcast={item} onPress={(p) => play(p, data.popularPodcasts)} />} />
             </View>
 
-            {data.reels.length ? (
+            {clips.length ? (
               <View className="mt-5">
                 <SectionHeader title="Praise Clips" onAction={() => navigation.navigate('PodcastList', { title: 'Praise Clips', query: { type: 'clip' } })} />
-                <Rail data={data.reels} keyExtractor={podcastKey} gap={6} renderItem={({ item }) => <ReelThumb podcast={item} onPress={(p) => play(p, data.reels)} />} />
+                <Rail data={clips} keyExtractor={podcastKey} gap={6} renderItem={({ item }) => <ReelThumb podcast={item} onPress={(p) => navigation.navigate('ReelsViewer', { startId: p._id })} />} />
               </View>
             ) : null}
 

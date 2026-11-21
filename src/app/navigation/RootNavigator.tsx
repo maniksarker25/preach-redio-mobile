@@ -15,6 +15,7 @@ import { NotificationsScreen } from '@/features/notifications/screens/Notificati
 import { AlbumScreen } from '@/features/podcasts/screens/AlbumScreen';
 import { AlbumsScreen } from '@/features/podcasts/screens/AlbumsScreen';
 import { AudioPlayerScreen } from '@/features/podcasts/screens/AudioPlayerScreen';
+import { CommentThreadScreen } from '@/features/comments/screens/CommentThreadScreen';
 import { CommentsScreen } from '@/features/podcasts/screens/CommentsScreen';
 import { PodcastDetailScreen } from '@/features/podcasts/screens/PodcastDetailScreen';
 import { PodcastListScreen } from '@/features/podcasts/screens/PodcastListScreen';
@@ -93,6 +94,7 @@ export function RootNavigator() {
 
           <Stack.Group screenOptions={sheet}>
             <Stack.Screen name="Comments" component={CommentsScreen} options={{ sheetAllowedDetents: [0.75, 1] }} />
+            <Stack.Screen name="ClipComments" component={CommentThreadScreen} options={{ sheetAllowedDetents: [0.75, 1] }} />
             <Stack.Screen name="AddToPlaylist" component={AddToPlaylistScreen} />
             <Stack.Screen name="CreateSheet" component={CreateSheetScreen} options={{ sheetAllowedDetents: [0.55] }} />
           </Stack.Group>

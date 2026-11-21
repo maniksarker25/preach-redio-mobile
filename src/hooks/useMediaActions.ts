@@ -17,7 +17,7 @@ export const useMediaActions = () => {
   const play = useCallback(
     (podcast: Podcast, queue?: Podcast[]) => {
       if (isClip(podcast)) {
-        navigation.navigate('ReelsViewer', { startId: podcast._id, ids: queue?.filter(isClip).map((p) => p._id) });
+        navigation.navigate('ReelsViewer', { startId: podcast._id });
         return;
       }
       playPodcast(podcast, queue?.filter((p) => !isClip(p)));

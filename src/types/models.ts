@@ -148,6 +148,8 @@ export interface Podcast {
   tags: string[];
   totalView: number;
   totalLikes: number;
+  /** All comments including replies (list and get-single responses). */
+  totalComments?: number;
   /** Legacy "minutes.seconds" format (4m 07s → 4.07). Prefer `durationSeconds`. */
   duration: number;
   durationSeconds?: number;
