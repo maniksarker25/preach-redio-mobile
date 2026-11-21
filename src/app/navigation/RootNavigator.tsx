@@ -39,9 +39,22 @@ import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const player: NativeStackNavigationOptions = { presentation: 'fullScreenModal', animation: 'slide_from_bottom', gestureEnabled: true };
-const sheet: NativeStackNavigationOptions = { presentation: 'formSheet', sheetAllowedDetents: [0.6, 1], sheetCornerRadius: 28, sheetGrabberVisible: false, contentStyle: { backgroundColor: colors.ink[850] } };
-const modal: NativeStackNavigationOptions = { presentation: 'modal', animation: 'slide_from_bottom' };
+const player: NativeStackNavigationOptions = {
+  presentation: 'fullScreenModal',
+  animation: 'slide_from_bottom',
+  gestureEnabled: true,
+};
+const sheet: NativeStackNavigationOptions = {
+  presentation: 'formSheet',
+  sheetAllowedDetents: [0.6, 1],
+  sheetCornerRadius: 28,
+  sheetGrabberVisible: false,
+  contentStyle: { backgroundColor: colors.ink[850] },
+};
+const modal: NativeStackNavigationOptions = {
+  presentation: 'modal',
+  animation: 'slide_from_bottom',
+};
 
 /**
  * Signed out → onboarding / auth. Signed in → tabs + every detail, player and
@@ -54,7 +67,13 @@ export function RootNavigator() {
   useGetMyProfileQuery(undefined, { skip: !signedIn });
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', contentStyle: { backgroundColor: colors.ink[900] } }}>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'slide_from_right',
+        contentStyle: { backgroundColor: colors.ink[900] },
+      }}
+    >
       {!signedIn ? (
         <>
           {!hasOnboarded ? <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ animation: 'fade' }} /> : null}
@@ -94,10 +113,20 @@ export function RootNavigator() {
 
           <Stack.Group screenOptions={sheet}>
             <Stack.Screen name="Comments" component={CommentsScreen} options={{ sheetAllowedDetents: [0.75, 1] }} />
-            <Stack.Screen name="ClipComments" component={CommentThreadScreen} options={{ sheetAllowedDetents: [0.75, 1] }} />
             <Stack.Screen name="AddToPlaylist" component={AddToPlaylistScreen} />
             <Stack.Screen name="CreateSheet" component={CreateSheetScreen} options={{ sheetAllowedDetents: [0.55] }} />
           </Stack.Group>
+
+          {/* Draws its own bottom sheet so the comment box stays above the keyboard. */}
+          <Stack.Screen
+            name="ClipComments"
+            component={CommentThreadScreen}
+            options={{
+              presentation: 'transparentModal',
+              animation: 'slide_from_bottom',
+              contentStyle: { backgroundColor: 'transparent' },
+            }}
+          />
 
           <Stack.Group screenOptions={modal}>
             <Stack.Screen name="PlaylistEditor" component={PlaylistEditorScreen} />
