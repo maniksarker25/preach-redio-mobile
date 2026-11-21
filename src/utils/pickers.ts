@@ -8,6 +8,9 @@ export interface PickedFile {
   size?: number;
   /** seconds, when the picker reports it (videos) */
   duration?: number;
+  /** pixels, for videos */
+  width?: number;
+  height?: number;
 }
 
 /** Pick a square image (avatars, covers). Returns null when cancelled. */
@@ -21,7 +24,15 @@ export const pickVideo = async (): Promise<PickedFile | null> => {
   const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], quality: 1 });
   const asset = result.canceled ? undefined : result.assets[0];
   return asset
-    ? { uri: asset.uri, name: asset.fileName ?? 'video.mp4', mimeType: asset.mimeType, size: asset.fileSize, duration: asset.duration ? asset.duration / 1000 : undefined }
+    ? {
+        uri: asset.uri,
+        name: asset.fileName ?? 'video.mp4',
+        mimeType: asset.mimeType,
+        size: asset.fileSize,
+        duration: asset.duration ? asset.duration / 1000 : undefined,
+        width: asset.width || undefined,
+        height: asset.height || undefined,
+      }
     : null;
 };
 

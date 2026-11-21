@@ -1,4 +1,7 @@
-import { repositories, type CreatePodcastInput, type HomeFeed, type PodcastDetail, type PodcastQuery } from '@/services/repositories';
+import { endpoints } from '@/services/api/endpoints';
+import type { Paginated } from '@/types/api';
+import type { CreatePodcastBody } from '@/types/upload';
+import { repositories, type HomeFeed, type PodcastDetail, type PodcastQuery } from '@/services/repositories';
 import type { Broadcaster } from '@/types/broadcaster';
 import type { Album, AlbumDetail, AppNotification, Category, Comment, ContentPage, ContentPageKey, FaqItem, Podcast, PodcastType, StreamRoom, SubCategory } from '@/types/models';
 import { baseApi, type ApiErrorShape } from './baseApi';
@@ -49,17 +52,20 @@ export const contentApi = baseApi.injectEndpoints({
       queryFn: (term) => fromRepo(() => podcasts.search(term)),
       keepUnusedDataFor: 30,
     }),
+    /* ------------------------------------------- creator (live backend) */
     getMyPodcasts: build.query<Podcast[], PodcastType | undefined>({
-      queryFn: (type) => fromRepo(() => podcasts.mine(type)),
+      query: (type) => ({ url: endpoints.podcast.myPodcasts, params: { ...(type ? { type } : {}), limit: 100, sort: '-createdAt' } }),
+      transformResponse: (res: Paginated<Podcast>) => res.result,
       providesTags: ['MyPodcasts'],
     }),
-    createPodcast: build.mutation<Podcast, CreatePodcastInput>({
-      queryFn: (input) => fromRepo(() => podcasts.create(input)),
-      invalidatesTags: ['MyPodcasts', 'Home', { type: 'Podcast', id: 'LIST' }],
+    /** JSON only — audio/video and cover are uploaded to S3 first (see services/upload). */
+    createPodcast: build.mutation<Podcast, CreatePodcastBody>({
+      query: (body) => ({ url: endpoints.podcast.create, method: 'POST', body }),
+      invalidatesTags: ['MyPodcasts', 'Home', 'Clip', { type: 'Podcast', id: 'LIST' }],
     }),
-    deletePodcast: build.mutation<void, string>({
-      queryFn: (id) => fromRepo(() => podcasts.remove(id)),
-      invalidatesTags: (_r, _e, id) => ['MyPodcasts', 'Home', { type: 'Podcast', id }, { type: 'Podcast', id: 'LIST' }],
+    deletePodcast: build.mutation<unknown, string>({
+      query: (id) => ({ url: endpoints.podcast.remove(id), method: 'DELETE' }),
+      invalidatesTags: (_r, _e, id) => ['MyPodcasts', 'Home', 'Clip', { type: 'Podcast', id }, { type: 'Podcast', id: 'LIST' }],
     }),
 
     /* --------------------------------------------------------- catalog */

@@ -30,7 +30,7 @@ type HeroSlide = HeroItem & { podcast?: Podcast; albumId?: string; url?: string 
 /**
  * Home — header (brand, greeting, search, notifications), a hero built from the admin banners, a compact
  * category row, then the Flutter sections in their original order:
- * Top Favorites · Features · Just In · Faith Hits · Praise Clips · Series · Streaming Record.
+ * Top Favorites · Features · Just In · Faith Hits · Praise Clips · Series · Recent Live Streams (Flutter "Streaming Record").
  */
 export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   const { width: screen } = useWindowDimensions();
@@ -177,7 +177,7 @@ export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
 
             {records.data?.length ? (
               <View className="mt-5">
-                <SectionHeader title="Streaming Record" />
+                <SectionHeader title="Recent Live Streams" />
                 <Rail
                   data={records.data}
                   keyExtractor={(r) => r._id}

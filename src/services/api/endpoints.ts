@@ -29,7 +29,7 @@ export const endpoints = {
     myPodcasts: '/podcast/my-podcasts',
     create: '/podcast/create',
     update: (id: string) => `/podcast/update/${id}`,
-    remove: (id: string) => `/podcast/delete/${id}`,
+    remove: (id: string) => `/podcast/delete-podcast/${id}`,
     globalSearch: '/podcast/global-search',
     view: (id: string) => `/podcast/view/${id}`,
     feed: '/podcast/get-podcast-feed',
@@ -45,6 +45,8 @@ export const endpoints = {
     update: (commentId: string) => `/comment/update-comment/${commentId}`,
     remove: (commentId: string) => `/comment/delete-comment/${commentId}`,
   },
+  /** Raw (non-enveloped) `{ uploadURL, fileName }`; the URL is valid for 60 s. */
+  upload: { presign: '/generate-presigned-url' },
   watchHistory: { mine: '/watch-history/get-all' },
   album: { all: '/album/all-albums', single: (id: string) => `/album/get-single/${id}` },
   playlist: {
