@@ -3,7 +3,7 @@ import type { Paginated } from '@/types/api';
 import type { CreatePodcastBody } from '@/types/upload';
 import { repositories, type HomeFeed, type PodcastDetail, type PodcastQuery } from '@/services/repositories';
 import type { Broadcaster } from '@/types/broadcaster';
-import type { Album, AlbumDetail, AppNotification, Category, Comment, ContentPage, ContentPageKey, FaqItem, Podcast, PodcastType, StreamRoom, SubCategory } from '@/types/models';
+import type { Album, AlbumDetail, Category, Comment, Podcast, PodcastType, StreamRoom, SubCategory } from '@/types/models';
 import { baseApi, type ApiErrorShape } from './baseApi';
 
 /**
@@ -22,7 +22,7 @@ const fromRepo = async <T>(load: () => Promise<T>): Promise<{ data: T } | { erro
   }
 };
 
-const { podcasts, home, catalog, albums, broadcasters, engagement, notifications, content } = repositories;
+const { podcasts, home, catalog, albums, broadcasters, engagement } = repositories;
 
 export const contentApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -121,22 +121,6 @@ export const contentApi = baseApi.injectEndpoints({
         }
       },
     }),
-    getNotifications: build.query<AppNotification[], void>({
-      queryFn: () => fromRepo(notifications.list),
-      providesTags: ['Notification'],
-    }),
-
-    /* ------------------------------------------------------------- CMS */
-    getContentPage: build.query<ContentPage, ContentPageKey>({
-      queryFn: (key) => fromRepo(() => content.page(key)),
-      providesTags: (_r, _e, key) => [{ type: 'Content', id: key }],
-      keepUnusedDataFor: 600,
-    }),
-    getFaqs: build.query<FaqItem[], void>({
-      queryFn: () => fromRepo(content.faqs),
-      providesTags: [{ type: 'Content', id: 'FAQ' }],
-      keepUnusedDataFor: 600,
-    }),
   }),
 });
 
@@ -160,7 +144,4 @@ export const {
   useGetPreviousLivesQuery,
   useGetCommentsQuery,
   useAddCommentMutation,
-  useGetNotificationsQuery,
-  useGetContentPageQuery,
-  useGetFaqsQuery,
 } = contentApi;

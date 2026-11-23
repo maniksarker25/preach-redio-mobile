@@ -176,16 +176,28 @@ export interface AlbumDetail extends Omit<Album, 'podcasts'> {
 }
 
 /** `playlist` module — a user's own collection. */
+/** `playlist` module. Lists return podcast ids; `get-single` returns `PlaylistDetail`. */
 export interface Playlist {
   _id: ID;
   user: ID;
   userType: 'NormalUser' | 'Creator';
   name: string;
-  description: string;
+  description?: string;
   tags: string[];
-  cover_image?: string;
+  /** Optional; the app falls back to the podcasts' covers. */
+  cover_image?: string | null;
+  /** false → only the owner can open it. */
+  isPublic?: boolean;
+  /** Ordered, unique, max 500. */
   podcasts: ID[];
   createdAt: ISODate;
+  updatedAt?: ISODate;
+}
+
+/** `GET /playlist/get-single/:id` — owner and podcasts populated (deleted / hidden podcasts are left out). */
+export interface PlaylistDetail extends Omit<Playlist, 'user' | 'podcasts'> {
+  user: { _id: ID; name: string; profile_image?: string } | null;
+  podcasts: Podcast[];
 }
 
 /* ------------------------------------------------------------------ live */
@@ -252,15 +264,17 @@ export interface Comment {
   replies?: Comment[];
 }
 
-export type NotificationType = 'GENERAL' | 'LIVE_INVITATION' | 'PAYMENT' | 'FEEDBACK';
+export type NotificationType = 'GENERAL' | 'LIVE_INVITATION' | 'PAYMENT' | 'FEEDBACK' | 'COMMENT' | 'COURSE' | 'CLASS' | 'ORDER';
 
 export interface AppNotification {
   _id: ID;
   title: string;
   message: string;
   type: NotificationType;
-  redirectId?: string;
-  seenBy: ID[];
+  /** Podcast id for COMMENT; otherwise whatever the sender set. */
+  redirectId?: string | null;
+  /** Seen by the signed-in user. */
+  isSeen: boolean;
   createdAt: ISODate;
 }
 
@@ -297,8 +311,15 @@ export type ContentPageKey = 'about' | 'terms' | 'privacy';
 export interface ContentPage {
   key: ContentPageKey;
   title: string;
+  /** HTML from the dashboard editor (render with `htmlToBlocks`). */
   body: string;
   updatedAt: ISODate;
+}
+
+/** `/manage/get-contact-us` — set from the dashboard. */
+export interface SupportContact {
+  email?: string;
+  phone_number?: string;
 }
 
 export interface FaqItem {

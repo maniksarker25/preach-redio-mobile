@@ -52,11 +52,35 @@ export const commentsFor = (podcastId: string): Comment[] => {
 };
 
 export const notifications: AppNotification[] = [
-  { _id: 'ntf_1', title: 'Rachel Kim Worship is live', message: 'Friday Night Worship just started. Join now.', type: 'LIVE_INVITATION', redirectId: 'cr_rachel', seenBy: [], createdAt: daysAgo(0, 1) },
-  { _id: 'ntf_2', title: 'New message from Pastor Elijah Mensah', message: '“Anchored: Faith That Holds in the Storm” is now available.', type: 'GENERAL', redirectId: 'pod_anchored', seenBy: [], createdAt: daysAgo(1) },
-  { _id: 'ntf_3', title: 'Preach Radio is live', message: 'Evening Prayer is on air now.', type: 'LIVE_INVITATION', redirectId: 'stn_preachradio', seenBy: ['nu_me'], createdAt: daysAgo(1, 6) },
-  { _id: 'ntf_4', title: 'Your subscription is active', message: 'Thank you for supporting Preach Radio. Enjoy ad-free listening.', type: 'PAYMENT', seenBy: ['nu_me'], createdAt: daysAgo(6) },
-  { _id: 'ntf_5', title: 'New series: Foundations of Faith', message: 'Six messages on the core of the Christian life.', type: 'GENERAL', redirectId: 'alb_foundations', seenBy: ['nu_me'], createdAt: daysAgo(9) },
+  {
+    _id: 'ntf_1',
+    title: 'Rachel Kim Worship is live',
+    message: 'Friday Night Worship just started. Join now.',
+    type: 'LIVE_INVITATION',
+    redirectId: 'cr_rachel',
+    isSeen: false,
+    createdAt: daysAgo(0, 1),
+  },
+  {
+    _id: 'ntf_2',
+    title: 'New message from Pastor Elijah Mensah',
+    message: '“Anchored: Faith That Holds in the Storm” is now available.',
+    type: 'GENERAL',
+    redirectId: 'pod_anchored',
+    isSeen: false,
+    createdAt: daysAgo(1),
+  },
+  { _id: 'ntf_3', title: 'Preach Radio is live', message: 'Evening Prayer is on air now.', type: 'LIVE_INVITATION', redirectId: 'stn_preachradio', isSeen: true, createdAt: daysAgo(1, 6) },
+  { _id: 'ntf_4', title: 'Your subscription is active', message: 'Thank you for supporting Preach Radio. Enjoy ad-free listening.', type: 'PAYMENT', isSeen: true, createdAt: daysAgo(6) },
+  {
+    _id: 'ntf_5',
+    title: 'New series: Foundations of Faith',
+    message: 'Six messages on the core of the Christian life.',
+    type: 'GENERAL',
+    redirectId: 'alb_foundations',
+    isSeen: true,
+    createdAt: daysAgo(9),
+  },
 ];
 
 export const contentPages: Record<ContentPage['key'], ContentPage> = {

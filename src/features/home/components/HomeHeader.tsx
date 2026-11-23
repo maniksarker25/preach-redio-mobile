@@ -7,7 +7,7 @@ import { View } from 'react-native';
 import { logoMark } from '@/assets';
 import { AppText } from '@/components/common/AppText';
 import { Touchable } from '@/components/common/Touchable';
-import { useNotifications } from '@/hooks/queries';
+import { useGetUnseenNotificationCountQuery } from '@/store/api/notificationsApi';
 import { useAppSelector } from '@/store/hooks';
 import { selectProfile } from '@/store/slices/authSlice';
 import { colors, GUTTER } from '@/theme';
@@ -20,12 +20,34 @@ const RoundAction = ({ icon: Icon, label, badge, onPress }: { icon: LucideIcon; 
     scaleTo={0.9}
     onPress={onPress}
     accessibilityLabel={label}
-    style={{ width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}
+    style={{
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(255,255,255,0.07)',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.08)',
+    }}
   >
     <Icon size={20} color={colors.white} strokeWidth={2} />
     {badge ? (
       <View
-        style={{ position: 'absolute', top: -2, right: -2, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.live, borderWidth: 2, borderColor: colors.ink[900] }}
+        style={{
+          position: 'absolute',
+          top: -2,
+          right: -2,
+          minWidth: 18,
+          height: 18,
+          borderRadius: 9,
+          paddingHorizontal: 4,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.live,
+          borderWidth: 2,
+          borderColor: colors.ink[900],
+        }}
       >
         <AppText variant="caption" tone="white" className="text-[10px] leading-[12px]">
           {badge > 9 ? '9+' : badge}
@@ -39,8 +61,8 @@ const RoundAction = ({ icon: Icon, label, badge, onPress }: { icon: LucideIcon; 
 export const HomeHeader = memo(function HomeHeader() {
   const navigation = useNavigation();
   const profile = useAppSelector(selectProfile);
-  const { data: notifications } = useNotifications();
-  const unread = notifications?.filter((n) => !n.seenBy.includes(profile?._id ?? '')).length ?? 0;
+  // Light count endpoint; re-checked every minute while the app is in front.
+  const { data: unread = 0 } = useGetUnseenNotificationCountQuery(undefined, { pollingInterval: 60_000, skipPollingIfUnfocused: true, refetchOnMountOrArgChange: 30 });
   const firstName = profile?.name.split(' ')[0] ?? 'there';
 
   return (

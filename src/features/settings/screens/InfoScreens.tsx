@@ -1,47 +1,70 @@
-import { ChevronDown, Mail, MessageSquare, User } from 'lucide-react-native';
-import { useState } from 'react';
+import { ChevronDown, FileText, HelpCircle, Mail, MessageSquare, Phone, User } from 'lucide-react-native';
+import { useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
 import type { RootScreenProps } from '@/app/navigation/types';
 import { AppText } from '@/components/common/AppText';
 import { Button } from '@/components/common/Button';
-import { ErrorState, Skeleton } from '@/components/common/States';
+import { EmptyState, ErrorState, Skeleton } from '@/components/common/States';
 import { TextField } from '@/components/common/TextField';
 import { Touchable } from '@/components/common/Touchable';
 import { ScreenHeader } from '@/components/layouts/ScreenHeader';
 import { Screen } from '@/components/layouts/Screen';
-import { useContentPage, useFaqs } from '@/hooks/queries';
+import { useGetContentPageQuery, useGetFaqsQuery, useGetSupportContactQuery, useSendFeedbackMutation } from '@/store/api/settingsApi';
 import { useAppSelector } from '@/store/hooks';
 import { selectProfile } from '@/store/slices/authSlice';
 import { colors, GUTTER } from '@/theme';
+import { getErrorMessage } from '@/utils/apiError';
 import { timeAgo } from '@/utils/format';
+import { htmlToBlocks } from '@/utils/html';
 
-const SUPPORT_EMAIL = 'support@preachradio.com';
+/** Used until the dashboard sets a contact email. */
+const FALLBACK_SUPPORT_EMAIL = 'support@preachradio.com';
+const PAGE_TITLES = { about: 'About Us', terms: 'Terms of Services', privacy: 'Privacy Policy' } as const;
 
-/** CMS page (about / terms / privacy), managed from the dashboard. */
+/** CMS page (about / terms / privacy) — live; the dashboard saves HTML, rendered here as native text. */
 export function ContentPageScreen({ route }: RootScreenProps<'ContentPage'>) {
-  const page = useContentPage(route.params.key);
+  const { key } = route.params;
+  const page = useGetContentPageQuery(key);
+  const blocks = useMemo(() => htmlToBlocks(page.data?.body), [page.data?.body]);
   return (
     <Screen>
-      <ScreenHeader title={page.data?.title} />
+      <ScreenHeader title={PAGE_TITLES[key]} />
       {page.isLoading ? (
         <View style={{ padding: GUTTER, gap: 10 }}>
           {[0, 1, 2, 3, 4].map((i) => (
             <Skeleton key={i} width={i % 2 ? '85%' : '100%'} height={14} />
           ))}
         </View>
-      ) : page.isError || !page.data ? (
+      ) : page.isError ? (
         <ErrorState onRetry={() => void page.refetch()} />
+      ) : !page.data || !blocks.length ? (
+        <EmptyState icon={FileText} title="Coming soon" message="This page hasn’t been published yet. Please check back later." />
       ) : (
         <ScrollView contentContainerStyle={{ padding: GUTTER, paddingBottom: 48 }}>
           <AppText variant="caption" tone="muted" className="mb-5">
             Updated {timeAgo(page.data.updatedAt)}
           </AppText>
-          {page.data.body.split('\n\n').map((para, i) => (
-            <AppText key={i} variant="body" tone="secondary" className="mb-4">
-              {para}
-            </AppText>
-          ))}
+          {blocks.map((b, i) =>
+            b.kind === 'heading' ? (
+              <AppText key={i} variant="h3" className="mb-2 mt-2" accessibilityRole="header">
+                {b.text}
+              </AppText>
+            ) : b.kind === 'bullet' ? (
+              <View key={i} className="mb-2 flex-row pl-1">
+                <AppText variant="body" tone="secondary" className="w-5">
+                  •
+                </AppText>
+                <AppText variant="body" tone="secondary" className="flex-1">
+                  {b.text}
+                </AppText>
+              </View>
+            ) : (
+              <AppText key={i} variant="body" tone="secondary" className="mb-4">
+                {b.text}
+              </AppText>
+            ),
+          )}
         </ScrollView>
       )}
     </Screen>
@@ -70,7 +93,7 @@ const FaqItemView = ({ q, a }: { q: string; a: string }) => {
 };
 
 export function FaqScreen({ navigation }: RootScreenProps<'Faq'>) {
-  const faqs = useFaqs();
+  const faqs = useGetFaqsQuery();
   return (
     <Screen>
       <ScreenHeader title="FAQ" />
@@ -78,7 +101,23 @@ export function FaqScreen({ navigation }: RootScreenProps<'Faq'>) {
         <ErrorState onRetry={() => void faqs.refetch()} />
       ) : (
         <ScrollView contentContainerStyle={{ padding: GUTTER, gap: 10, paddingBottom: 48 }}>
-          {faqs.isLoading ? [0, 1, 2].map((i) => <Skeleton key={i} width="100%" height={58} />) : faqs.data?.map((f) => <FaqItemView key={f._id} q={f.question} a={f.answer} />)}
+          {faqs.isLoading ? (
+            [0, 1, 2].map((i) => <Skeleton key={i} width="100%" height={58} />)
+          ) : faqs.data?.length ? (
+            faqs.data.map((f) => (
+              <FaqItemView
+                key={f._id}
+                q={f.question}
+                a={
+                  htmlToBlocks(f.answer)
+                    .map((b) => b.text)
+                    .join('\n\n') || f.answer
+                }
+              />
+            ))
+          ) : (
+            <EmptyState icon={HelpCircle} title="No FAQs yet" message="Can’t find an answer? Send us a message." />
+          )}
           <View className="mt-6 items-center">
             <AppText variant="bodySm" tone="muted">
               Still need help?
@@ -91,26 +130,29 @@ export function FaqScreen({ navigation }: RootScreenProps<'Faq'>) {
   );
 }
 
-/** Contact form — posts to `/contact-us` once connected. */
+/** Help & support: FAQ, email/phone from the dashboard (`get-contact-us`), and a message that lands in the dashboard's Feedback. */
 export function SupportScreen({ navigation }: RootScreenProps<'Support'>) {
   const profile = useAppSelector(selectProfile);
+  const contact = useGetSupportContactQuery();
+  const [sendFeedback, { isLoading: busy }] = useSendFeedbackMutation();
   const [name, setName] = useState(profile?.name ?? '');
-  const [email, setEmail] = useState(profile?.email ?? '');
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState(false);
+  const email = contact.data?.email?.trim() || FALLBACK_SUPPORT_EMAIL;
+  const phone = contact.data?.phone_number?.trim();
 
   const send = async () => {
     const e: Record<string, string> = {};
     if (!name.trim()) e.name = 'Enter your name';
-    if (!/^\S+@\S+\.\S+$/.test(email)) e.email = 'Enter a valid email';
     if (message.trim().length < 10) e.message = 'Tell us a little more (10+ characters)';
     setErrors(e);
     if (Object.keys(e).length) return;
-    setBusy(true);
-    await new Promise((r) => setTimeout(r, 700));
-    setBusy(false);
-    Alert.alert('Message sent', 'Thanks for reaching out. We usually reply within one business day.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
+    try {
+      await sendFeedback({ name: name.trim(), description: message.trim() }).unwrap();
+      Alert.alert('Message sent', 'Thanks for reaching out. Our team will get back to you soon.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
+    } catch (err) {
+      setErrors({ form: getErrorMessage(err) });
+    }
   };
 
   return (
@@ -128,23 +170,39 @@ export function SupportScreen({ navigation }: RootScreenProps<'Support'>) {
                 Quick answers
               </AppText>
             </Touchable>
-            <Touchable onPress={() => void Linking.openURL(`mailto:${SUPPORT_EMAIL}`)} className="flex-1 rounded-lg border border-line bg-ink-800 p-4" accessibilityLabel="Email support">
+            <Touchable onPress={() => void Linking.openURL(`mailto:${email}`)} className="flex-1 rounded-lg border border-line bg-ink-800 p-4" accessibilityLabel={`Email support at ${email}`}>
               <Mail size={20} color={colors.brand[400]} />
               <AppText variant="title" className="mt-3">
                 Email us
               </AppText>
               <AppText variant="caption" tone="muted" numberOfLines={1}>
-                {SUPPORT_EMAIL}
+                {email}
               </AppText>
             </Touchable>
           </View>
+          {phone ? (
+            <Touchable
+              onPress={() => void Linking.openURL(`tel:${phone.replace(/[^\d+]/g, '')}`)}
+              className="flex-row items-center rounded-lg border border-line bg-ink-800 p-4"
+              accessibilityLabel={`Call support at ${phone}`}
+            >
+              <Phone size={18} color={colors.brand[400]} />
+              <AppText variant="title" className="ml-3">
+                {phone}
+              </AppText>
+            </Touchable>
+          ) : null}
           <AppText variant="h3" className="mt-2">
             Send a message
           </AppText>
-          <TextField label="Name" icon={User} value={name} onChangeText={setName} error={errors.name} />
-          <TextField label="Email" icon={Mail} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" error={errors.email} />
-          <TextField label="How can we help?" value={message} onChangeText={setMessage} multiline maxLength={1000} error={errors.message} />
-          <Button label="Send message" onPress={send} loading={busy} size="lg" />
+          <TextField label="Name" icon={User} value={name} onChangeText={setName} error={errors.name} editable={!busy} />
+          <TextField label="How can we help?" value={message} onChangeText={setMessage} multiline maxLength={1000} error={errors.message} editable={!busy} />
+          {errors.form ? (
+            <AppText variant="caption" tone="live" accessibilityRole="alert">
+              {errors.form}
+            </AppText>
+          ) : null}
+          <Button label="Send message" onPress={() => void send()} loading={busy} disabled={busy} size="lg" />
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>

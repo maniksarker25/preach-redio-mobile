@@ -1,5 +1,5 @@
 import type { PodcastQuery } from '@/services/repositories';
-import type { ContentPageKey, PodcastType } from '@/types/models';
+import type { PodcastType } from '@/types/models';
 import * as api from '@/store/api/contentApi';
 
 /**
@@ -28,7 +28,3 @@ export const usePreviousLives = (id?: string) => api.useGetPreviousLivesQuery(id
 
 export const useComments = (podcastId: string) => api.useGetCommentsQuery(podcastId);
 export const useAddComment = api.useAddCommentMutation;
-export const useNotifications = () => api.useGetNotificationsQuery();
-
-export const useContentPage = (key: ContentPageKey) => api.useGetContentPageQuery(key);
-export const useFaqs = () => api.useGetFaqsQuery();

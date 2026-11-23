@@ -100,7 +100,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiErrorShap
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Profile', 'Home', 'Podcast', 'Album', 'Category', 'Broadcaster', 'Comment', 'Notification', 'Content', 'MyPodcasts', 'Clip', 'Episode', 'History', 'Favorite'],
+  tagTypes: ['Profile', 'Home', 'Podcast', 'Album', 'Category', 'Broadcaster', 'Comment', 'Notification', 'Content', 'MyPodcasts', 'Clip', 'Episode', 'History', 'Favorite', 'Playlist'],
   keepUnusedDataFor: 60,
   refetchOnReconnect: true,
   endpoints: () => ({}),
