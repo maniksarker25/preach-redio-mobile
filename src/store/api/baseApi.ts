@@ -61,11 +61,7 @@ const refreshAccessToken = (api: Parameters<BaseQueryFn>[1], extraOptions: objec
     const refreshToken = (api.getState() as { auth: AuthState }).auth.refreshToken;
     if (!refreshToken) return null;
     // The backend reads the refresh token from the `refreshToken` cookie.
-    const res = await envelopeBaseQuery(
-      { url: endpoints.auth.refreshToken, method: 'POST', headers: { Cookie: `refreshToken=${refreshToken}` } },
-      api,
-      extraOptions,
-    );
+    const res = await envelopeBaseQuery({ url: endpoints.auth.refreshToken, method: 'POST', headers: { Cookie: `refreshToken=${refreshToken}` } }, api, extraOptions);
     const token = (res.data as { accessToken?: string } | undefined)?.accessToken;
     if (token) api.dispatch(tokenRefreshed(token));
     return token ?? null;
@@ -104,7 +100,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiErrorShap
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Profile', 'Home', 'Podcast', 'Album', 'Category', 'Broadcaster', 'Comment', 'Notification', 'Content', 'MyPodcasts', 'Clip'],
+  tagTypes: ['Profile', 'Home', 'Podcast', 'Album', 'Category', 'Broadcaster', 'Comment', 'Notification', 'Content', 'MyPodcasts', 'Clip', 'Episode', 'History', 'Favorite'],
   keepUnusedDataFor: 60,
   refetchOnReconnect: true,
   endpoints: () => ({}),

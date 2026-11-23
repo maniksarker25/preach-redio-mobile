@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { Linking, RefreshControl, ScrollView, useWindowDimensions, View } from 'react-native';
 import type { TabScreenProps } from '@/app/navigation/types';
 import { CategoryPill } from '@/components/cards/CategoryPill';
-import { MusicCard, ReelThumb, SeriesCard } from '@/components/cards/HomeCards';
+import { ReelThumb, SeriesCard } from '@/components/cards/HomeCards';
 import { SectionHeader } from '@/components/common/SectionHeader';
 import { ErrorState } from '@/components/common/States';
 import { Rail } from '@/components/layouts/Rail';
@@ -11,11 +11,13 @@ import { Screen } from '@/components/layouts/Screen';
 import { useBroadcasters, useHomeFeed, usePreviousLives } from '@/hooks/queries';
 import { useBottomSpace } from '@/hooks/useBottomSpace';
 import { useMediaActions } from '@/hooks/useMediaActions';
+import { useGetEpisodeFeedInfiniteQuery } from '@/store/api/episodesApi';
 import { useGetClipsInfiniteQuery } from '@/store/api/reelsApi';
 import { colors, GUTTER } from '@/theme';
 import type { Podcast } from '@/types/models';
 import { ownerName } from '@/utils/podcast';
 import { BannerPager, type BannerItem } from '../components/BannerPager';
+import { EpisodeRail } from '../components/EpisodeRail';
 import { HeroBanner, type HeroItem } from '../components/HeroBanner';
 import { HomeHeader } from '../components/HomeHeader';
 import { HomeSkeleton } from '../components/HomeSkeleton';
@@ -23,6 +25,7 @@ import { StreamingRecordCard } from '../components/StreamingRecordCard';
 import { TopFavorites } from '../components/TopFavorites';
 
 const podcastKey = (p: Podcast) => p._id;
+const EMPTY: Podcast[] = [];
 
 /** A hero slide plus what it opens. */
 type HeroSlide = HeroItem & { podcast?: Podcast; albumId?: string; url?: string };
@@ -40,9 +43,16 @@ export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   const records = usePreviousLives();
   const { play } = useMediaActions();
   const data = feed.data;
-  // Praise Clips come from the live clip feed (first page); the rest of home is still mock.
+  // Live: Just In, Faith Hits and Praise Clips (first page of each feed). The rest of home is still mock.
+  const justIn = useGetEpisodeFeedInfiniteQuery('newest');
+  const faithHits = useGetEpisodeFeedInfiniteQuery('popular');
+  const justInItems = justIn.data?.pages[0]?.result ?? EMPTY;
+  const faithHitsItems = faithHits.data?.pages[0]?.result ?? EMPTY;
   const clipFeed = useGetClipsInfiniteQuery();
   const clips = clipFeed.data?.pages[0]?.result ?? [];
+  // A pull-to-refresh, not the first load (that shows skeletons).
+  const isRefreshing = (q: typeof justIn) => q.isFetching && !q.isLoading && !q.isFetchingNextPage;
+  const refreshingLive = isRefreshing(justIn) || isRefreshing(faithHits);
 
   /** Hero slides come from the admin banners; each links to a podcast or a series. */
   const hero = useMemo<HeroSlide[]>(() => {
@@ -89,7 +99,9 @@ export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
     void hosts.refetch();
     void records.refetch();
     void clipFeed.refetch();
-  }, [feed, hosts, records, clipFeed]);
+    void justIn.refetch();
+    void faithHits.refetch();
+  }, [feed, hosts, records, clipFeed, justIn, faithHits]);
 
   return (
     <Screen>
@@ -105,7 +117,7 @@ export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: bottom }}
-        refreshControl={<RefreshControl refreshing={feed.isFetching} onRefresh={onRefresh} tintColor={colors.white} />}
+        refreshControl={<RefreshControl refreshing={feed.isFetching || refreshingLive} onRefresh={onRefresh} tintColor={colors.white} />}
       >
         {feed.isLoading ? (
           <HomeSkeleton />
@@ -144,15 +156,25 @@ export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
               </View>
             ) : null}
 
-            <View className="mt-5">
-              <SectionHeader title="Just In" onAction={() => navigation.navigate('PodcastList', { title: 'Just In', query: { type: 'episode', sort: 'newest' } })} />
-              <Rail data={data.newestPodcasts} keyExtractor={podcastKey} gap={8} renderItem={({ item }) => <MusicCard podcast={item} onPress={(p) => play(p, data.newestPodcasts)} />} />
-            </View>
+            <EpisodeRail
+              title="Just In"
+              items={justInItems}
+              isLoading={justIn.isLoading}
+              isError={justIn.isError}
+              onRetry={() => void justIn.refetch()}
+              onSeeAll={() => navigation.navigate('PodcastList', { title: 'Just In', query: { type: 'episode', sort: 'newest' } })}
+              onPress={play}
+            />
 
-            <View className="mt-5">
-              <SectionHeader title="Faith Hits" onAction={() => navigation.navigate('PodcastList', { title: 'Faith Hits', query: { type: 'episode', sort: 'popular' } })} />
-              <Rail data={data.popularPodcasts} keyExtractor={podcastKey} gap={8} renderItem={({ item }) => <MusicCard podcast={item} onPress={(p) => play(p, data.popularPodcasts)} />} />
-            </View>
+            <EpisodeRail
+              title="Faith Hits"
+              items={faithHitsItems}
+              isLoading={faithHits.isLoading}
+              isError={faithHits.isError}
+              onRetry={() => void faithHits.refetch()}
+              onSeeAll={() => navigation.navigate('PodcastList', { title: 'Faith Hits', query: { type: 'episode', sort: 'popular' } })}
+              onPress={play}
+            />
 
             {clips.length ? (
               <View className="mt-5">
@@ -168,9 +190,7 @@ export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
                   data={data.albums}
                   keyExtractor={(a) => a._id}
                   gap={8}
-                  renderItem={({ item, index }) => (
-                    <SeriesCard album={item} width={index === 0 ? screen - GUTTER * 2 : screen / 3} onPress={(a) => navigation.navigate('Album', { id: a._id })} />
-                  )}
+                  renderItem={({ item, index }) => <SeriesCard album={item} width={index === 0 ? screen - GUTTER * 2 : screen / 3} onPress={(a) => navigation.navigate('Album', { id: a._id })} />}
                 />
               </View>
             ) : null}
@@ -182,9 +202,7 @@ export function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
                   data={records.data}
                   keyExtractor={(r) => r._id}
                   gap={12}
-                  renderItem={({ item }) => (
-                    <StreamingRecordCard room={item} cover={coverFor(item.station ?? item.creator)} onPress={(r) => navigation.navigate('RecordPlayer', { roomId: r._id })} />
-                  )}
+                  renderItem={({ item }) => <StreamingRecordCard room={item} cover={coverFor(item.station ?? item.creator)} onPress={(r) => navigation.navigate('RecordPlayer', { roomId: r._id })} />}
                 />
               </View>
             ) : null}

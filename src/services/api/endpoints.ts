@@ -24,7 +24,7 @@ export const endpoints = {
   },
   podcast: {
     home: '/podcast/get-home-data',
-    all: '/podcast/all', // ?type=clip|episode&category=&subCategory=&searchTerm=&page=&limit=
+    all: '/podcast/all', // ?type=clip|episode&sort=popular&category=&subCategory=&searchTerm=&page=&limit=
     single: (id: string) => `/podcast/get-single/${id}`,
     myPodcasts: '/podcast/my-podcasts',
     create: '/podcast/create',

@@ -6,7 +6,7 @@ import type { RootScreenProps } from '@/app/navigation/types';
 import { IconButton } from '@/components/common/IconButton';
 import { ErrorState } from '@/components/common/States';
 import { Screen } from '@/components/layouts/Screen';
-import { flattenClips, useGetClipQuery, useGetClipsInfiniteQuery } from '@/store/api/reelsApi';
+import { flattenPodcastPages, useGetClipQuery, useGetClipsInfiniteQuery } from '@/store/api/reelsApi';
 import { colors } from '@/theme';
 import { ReelsFeed } from '../components/ReelsFeed';
 
@@ -18,7 +18,7 @@ export function ReelsViewerScreen({ route, navigation }: RootScreenProps<'ReelsV
   const insets = useSafeAreaInsets();
   const { startId } = route.params;
   const feed = useGetClipsInfiniteQuery();
-  const loaded = useMemo(() => flattenClips(feed.data?.pages), [feed.data?.pages]);
+  const loaded = useMemo(() => flattenPodcastPages(feed.data?.pages), [feed.data?.pages]);
   const startLoaded = loaded.some((c) => c._id === startId);
   // The tapped clip may be on a page that isn't loaded yet — fetch it and show it first.
   const start = useGetClipQuery(startId, { skip: !feed.isSuccess || startLoaded });

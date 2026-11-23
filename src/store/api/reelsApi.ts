@@ -1,25 +1,14 @@
 import { endpoints } from '@/services/api/endpoints';
 import type { Paginated } from '@/types/api';
 import type { Podcast } from '@/types/models';
+import { normalizePodcast } from '@/utils/podcast';
 import { baseApi } from './baseApi';
 
 /** Clips per page. Small pages keep the first clip on screen fast; the next page loads ahead of the user. */
 export const CLIPS_PAGE_SIZE = 10;
 
-const VIDEO_EXT = /\.(mp4|m4v|mov|webm|m3u8)(\?|$)/i;
-
-/**
- * Legacy records have no `type` / `mediaType`. Everything from the clip endpoint
- * is a clip; the media type is inferred from the file when the API omits it.
- */
-const normalizeClip = (p: Podcast): Podcast => ({
-  ...p,
-  type: p.type ?? 'clip',
-  mediaType: p.mediaType ?? (p.hlsUrl || VIDEO_EXT.test(p.podcast_url ?? '') ? 'video' : 'audio'),
-  tags: p.tags ?? [],
-  totalLikes: p.totalLikes ?? 0,
-  totalView: p.totalView ?? 0,
-});
+/** Everything from the clip endpoint is a clip, including legacy records without a `type`. */
+const normalizeClip = (p: Podcast): Podcast => normalizePodcast(p, 'clip');
 
 /**
  * Preach Clips (reels) — live backend.
@@ -66,6 +55,7 @@ export const reelsApi = baseApi.injectEndpoints({
 
     toggleClipBookmark: build.mutation<unknown, string>({
       query: (id) => ({ url: endpoints.bookmark.toggle(id), method: 'POST' }),
+      invalidatesTags: ['Favorite'], // the Favorite tab lists clips too
       async onQueryStarted(id, { dispatch, queryFulfilled }) {
         const patch = dispatch(reelsApi.util.updateQueryData('getClip', id, (d) => void (d.isBookmark = !d.isBookmark)));
         try {
@@ -84,8 +74,8 @@ export const reelsApi = baseApi.injectEndpoints({
 
 export const { useGetClipsInfiniteQuery, useGetClipQuery, useToggleClipLikeMutation, useToggleClipBookmarkMutation, useRecordClipViewMutation } = reelsApi;
 
-/** All loaded pages as one de-duplicated list (pages can shift when new clips are published). */
-export const flattenClips = (pages: Paginated<Podcast>[] | undefined): Podcast[] => {
+/** All loaded pages of a podcast feed as one de-duplicated list (pages can shift when new items are published). */
+export const flattenPodcastPages = (pages: Paginated<Podcast>[] | undefined): Podcast[] => {
   const seen = new Set<string>();
   const out: Podcast[] = [];
   for (const page of pages ?? []) {

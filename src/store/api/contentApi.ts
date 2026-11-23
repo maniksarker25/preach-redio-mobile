@@ -61,11 +61,11 @@ export const contentApi = baseApi.injectEndpoints({
     /** JSON only — audio/video and cover are uploaded to S3 first (see services/upload). */
     createPodcast: build.mutation<Podcast, CreatePodcastBody>({
       query: (body) => ({ url: endpoints.podcast.create, method: 'POST', body }),
-      invalidatesTags: ['MyPodcasts', 'Home', 'Clip', { type: 'Podcast', id: 'LIST' }],
+      invalidatesTags: ['MyPodcasts', 'Home', 'Clip', 'Episode', { type: 'Podcast', id: 'LIST' }],
     }),
     deletePodcast: build.mutation<unknown, string>({
       query: (id) => ({ url: endpoints.podcast.remove(id), method: 'DELETE' }),
-      invalidatesTags: (_r, _e, id) => ['MyPodcasts', 'Home', 'Clip', { type: 'Podcast', id }, { type: 'Podcast', id: 'LIST' }],
+      invalidatesTags: (_r, _e, id) => ['MyPodcasts', 'Home', 'Clip', 'Episode', { type: 'Podcast', id }, { type: 'Podcast', id: 'LIST' }],
     }),
 
     /* --------------------------------------------------------- catalog */

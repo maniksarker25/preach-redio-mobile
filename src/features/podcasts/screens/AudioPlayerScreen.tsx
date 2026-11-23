@@ -1,6 +1,6 @@
 import { ChevronDown, Gem, Heart, ListPlus, MessageCircle, Pause, Play, RotateCcw, RotateCw, Share2, SkipBack, SkipForward, ThumbsUp } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootScreenProps } from '@/app/navigation/types';
@@ -10,12 +10,15 @@ import { Touchable } from '@/components/common/Touchable';
 import { Screen } from '@/components/layouts/Screen';
 import { Seekbar } from '@/components/media/Seekbar';
 import { useBroadcaster } from '@/hooks/queries';
+import { useToggleFavoriteMutation } from '@/store/api/favoritesApi';
+import { useGetClipQuery } from '@/store/api/reelsApi';
 import { useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { colors } from '@/theme';
 import { formatCount } from '@/utils/format';
-import { ownerOf } from '@/utils/podcast';
+import { isVideo, ownerOf } from '@/utils/podcast';
 import { sharePodcast } from '@/utils/share';
+import { MediaModeToggle, PlayerVideo } from '../components/PlayerVideo';
 import { QueueCarousel } from '../components/QueueCarousel';
 
 /** Position-driven parts live in their own component so ticks don't re-render the carousel. */
@@ -61,7 +64,14 @@ const BottomAction = ({
 }) => {
   const tint = active && activeColor ? activeColor : 'rgba(255,255,255,0.72)';
   return (
-    <Touchable onPress={onPress} disabled={disabled} className="min-w-[56px] items-center py-1" accessibilityLabel={label} accessibilityState={active !== undefined ? { selected: active } : undefined} style={{ opacity: disabled ? 0.35 : 1 }}>
+    <Touchable
+      onPress={onPress}
+      disabled={disabled}
+      className="min-w-[56px] items-center py-1"
+      accessibilityLabel={label}
+      accessibilityState={active !== undefined ? { selected: active } : undefined}
+      style={{ opacity: disabled ? 0.35 : 1 }}
+    >
       <Icon size={22} color={tint} fill={active && activeColor ? activeColor : 'none'} />
       <AppText variant="caption" tone="secondary" className="mt-1 text-[11px]" numberOfLines={1}>
         {label}
@@ -71,26 +81,33 @@ const BottomAction = ({
 };
 
 /**
- * Player — Flutter `StreamAudioPlayScreen` layout with a swipeable queue:
+ * Player — Flutter `StreamAudioPlayScreen` layout. Video episodes open on the video (with a Video | Audio
+ * switch); audio episodes and Audio mode show the cover queue. Swipe the cover queue:
  * swipe the cover (or use ⏮ ⏭) to move between podcasts; the queue keeps
  * loading more, and the next podcast autoplays when one ends.
  */
 export function AudioPlayerScreen({ navigation }: RootScreenProps<'AudioPlayer'>) {
-  const { width } = useWindowDimensions();
+  const { width, height: screenHeight } = useWindowDimensions();
+  /** Height of the media area between the header and the controls (measured; estimate until then). */
+  const [stageHeight, setStageHeight] = useState(screenHeight * 0.45);
   const insets = useSafeAreaInsets();
   const nowPlaying = usePlayerStore((s) => s.nowPlaying);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const queue = usePlayerStore((s) => s.queue);
   const index = usePlayerStore((s) => s.index);
   const hasMore = usePlayerStore((s) => s.hasMore);
-  const { toggle, skipBy, next, previous, playAt } = usePlayerStore.getState();
+  const audioOnly = usePlayerStore((s) => s.audioOnly);
+  const { toggle, skipBy, next, previous, playAt, setAudioOnly } = usePlayerStore.getState();
 
   const podcast = nowPlaying?.kind === 'podcast' ? nowPlaying.podcast : null;
   const owner = podcast ? ownerOf(podcast) : null;
   const ownerInfo = useBroadcaster(owner?._id ?? '');
   const liked = useLibraryStore((s) => (podcast ? Boolean(s.liked[podcast._id]) : false));
-  const favorite = useLibraryStore((s) => (podcast ? Boolean(s.bookmarked[podcast._id]) : false));
-  const { toggleLike, toggleBookmark } = useLibraryStore.getState();
+  // Saved state comes from get-single (`isBookmark` for the signed-in user); the toggle is optimistic on it.
+  const single = useGetClipQuery(podcast?._id ?? '', { skip: !podcast });
+  const favorite = Boolean(single.data?.isBookmark);
+  const [toggleFavorite] = useToggleFavoriteMutation();
+  const { toggleLike } = useLibraryStore.getState();
 
   useEffect(() => {
     if (!podcast) navigation.goBack();
@@ -101,6 +118,8 @@ export function AudioPlayerScreen({ navigation }: RootScreenProps<'AudioPlayer'>
   const donation = ownerInfo.data?.donationUrl;
   const atEnd = index >= queue.length - 1 && !hasMore;
   const itemSize = width - 32;
+  const video = isVideo(podcast);
+  const showVideo = video && !audioOnly;
 
   return (
     <Screen className="bg-black">
@@ -118,11 +137,24 @@ export function AudioPlayerScreen({ navigation }: RootScreenProps<'AudioPlayer'>
         <IconButton icon={ListPlus} size={22} onPress={() => navigation.navigate('AddToPlaylist', { podcastId: podcast._id })} accessibilityLabel="Add to playlist" />
       </View>
 
-      {/* Cover — full width, one podcast at a time */}
-      <View className="flex-1 justify-center">
-        <View style={{ height: itemSize }}>
-          <QueueCarousel queue={queue} index={index} width={width} itemSize={itemSize} onChange={playAt} />
+      {/* Video episodes: Video | Audio switch (same player, position kept) */}
+      {video ? (
+        <View className="mt-1">
+          <MediaModeToggle audioOnly={audioOnly} onChange={setAudioOnly} />
         </View>
+      ) : null}
+
+      {/* Video → the picture · audio (or Audio mode) → the swipeable cover queue */}
+      <View className="flex-1 justify-center" onLayout={(e) => setStageHeight(e.nativeEvent.layout.height)}>
+        {showVideo ? (
+          <View className="items-center">
+            <PlayerVideo podcast={podcast} maxWidth={itemSize} maxHeight={Math.max(160, stageHeight - 16)} />
+          </View>
+        ) : (
+          <View style={{ height: itemSize }}>
+            <QueueCarousel queue={queue} index={index} width={width} itemSize={itemSize} onChange={playAt} />
+          </View>
+        )}
       </View>
 
       <View className="px-3" style={{ paddingBottom: insets.bottom + 16 }}>
@@ -151,7 +183,14 @@ export function AudioPlayerScreen({ navigation }: RootScreenProps<'AudioPlayer'>
         {/* Like · Save · Comments · Share · Support */}
         <View className="mt-6 flex-row justify-between px-2">
           <BottomAction icon={ThumbsUp} label={formatCount(podcast.totalLikes + (liked ? 1 : 0))} active={liked} activeColor={colors.success} onPress={() => toggleLike(podcast._id)} />
-          <BottomAction icon={Heart} label={favorite ? 'Saved' : 'Save'} active={favorite} activeColor={colors.live} onPress={() => toggleBookmark(podcast._id)} />
+          <BottomAction
+            icon={Heart}
+            label={favorite ? 'Saved' : 'Save'}
+            active={favorite}
+            activeColor={colors.live}
+            disabled={!single.data}
+            onPress={() => void toggleFavorite({ podcast, saved: !favorite })}
+          />
           <BottomAction icon={MessageCircle} label="Comments" onPress={() => navigation.navigate('Comments', { podcastId: podcast._id })} />
           <BottomAction icon={Share2} label="Share" onPress={() => void sharePodcast(podcast)} />
           <BottomAction icon={Gem} label="Support" disabled={!donation} onPress={() => donation && void Linking.openURL(donation)} />

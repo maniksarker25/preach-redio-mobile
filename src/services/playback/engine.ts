@@ -1,7 +1,7 @@
 /**
  * Playback engine contract. The UI and the player store only talk to this
- * interface, so the mock below can be swapped for a real implementation
- * (react-native-track-player / expo-audio for audio, 100ms for live) later.
+ * interface. `podcastEngine.ts` routes video episodes to expo-video and audio to expo-audio; live radio
+ * has no stream URL yet (100ms is not wired), so it still runs on the timer below.
  */
 export interface PlaybackSource {
   /** `hlsUrl ?? podcast_url`, or a live stream URL */
@@ -9,6 +9,10 @@ export interface PlaybackSource {
   durationSec: number;
   isLive: boolean;
   startAt?: number;
+  /** Video episodes play on expo-video (picture + audio); everything else on expo-audio. */
+  video?: boolean;
+  /** Lock screen / notification metadata. */
+  meta?: { title: string; artist?: string; artworkUrl?: string };
 }
 
 export interface PlaybackEngine {
@@ -20,6 +24,10 @@ export interface PlaybackEngine {
   release(): void;
   onProgress(listener: (positionSec: number) => void): () => void;
   onEnded(listener: () => void): () => void;
+  /** Play/pause changed outside the app UI (lock screen, headphones, an interruption). */
+  onPlayingChange(listener: (playing: boolean) => void): () => void;
+  /** The real media duration once known (the API value can be missing or rounded). */
+  onDuration(listener: (durationSec: number) => void): () => void;
 }
 
 const TICK_MS = 500;
@@ -83,5 +91,8 @@ export const createMockEngine = (): PlaybackEngine => {
       ended.add(listener);
       return () => ended.delete(listener);
     },
+    // A timer never changes on its own.
+    onPlayingChange: () => () => undefined,
+    onDuration: () => () => undefined,
   };
 };

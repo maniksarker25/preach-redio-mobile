@@ -1,8 +1,8 @@
 import { FlashList } from '@shopify/flash-list';
 import type { ReactElement } from 'react';
-import { useWindowDimensions, View } from 'react-native';
+import { RefreshControl, useWindowDimensions, View } from 'react-native';
 import { GridCard } from '@/components/cards/HomeCards';
-import { GUTTER } from '@/theme';
+import { colors, GUTTER } from '@/theme';
 import type { Podcast } from '@/types/models';
 
 interface PodcastGridProps {
@@ -14,12 +14,15 @@ interface PodcastGridProps {
   /** Infinite lists: load the next page. */
   onEndReached?: () => void;
   footer?: ReactElement | null;
+  /** Pull-to-refresh (live lists). */
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }
 
 const GAP = 12;
 
 /** The Flutter 2-column grid used by History, Favorite, Search, Series and See all. */
-export function PodcastGrid({ data, onPress, header, empty, bottom = 24, onEndReached, footer }: PodcastGridProps) {
+export function PodcastGrid({ data, onPress, header, empty, bottom = 24, onEndReached, footer, refreshing = false, onRefresh }: PodcastGridProps) {
   const { width } = useWindowDimensions();
   const cardW = (width - GUTTER * 2 - GAP) / 2;
 
@@ -33,6 +36,7 @@ export function PodcastGrid({ data, onPress, header, empty, bottom = 24, onEndRe
       ListFooterComponent={footer}
       onEndReached={onEndReached}
       onEndReachedThreshold={0.6}
+      refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.white} /> : undefined}
       contentContainerStyle={{ paddingHorizontal: GUTTER, paddingBottom: bottom }}
       renderItem={({ item, index }) => (
         <View style={{ paddingLeft: index % 2 === 1 ? GAP / 2 : 0, paddingRight: index % 2 === 0 ? GAP / 2 : 0, marginBottom: 16 }}>

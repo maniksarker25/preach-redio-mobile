@@ -36,7 +36,7 @@ export const Touchable = memo(function Touchable({ scaleTo = 0.97, haptic = fals
   );
   const handlePress = useCallback(
     (e: GestureResponderEvent) => {
-      if (haptic) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (haptic) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined); // haptics are optional (unsupported device / Expo Go)
       onPress?.(e);
     },
     [haptic, onPress],

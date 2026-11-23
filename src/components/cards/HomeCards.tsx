@@ -10,13 +10,22 @@ import type { Album, Podcast } from '@/types/models';
 import { formatLength, podcastSeconds } from '@/utils/format';
 import { isVideo } from '@/utils/podcast';
 
-/** Flutter `HomeMusicCard` — Just In / Faith Hits rails: cover + one-line title. */
+/**
+ * Just In / Faith Hits card size. 16:9 (approved deviation from Flutter's square `HomeMusicCard`): most episodes are
+ * video with 16:9 covers, so they show whole and large. ~68% of the screen wide, so the next card peeks in.
+ */
+export const musicCardSize = (screen: number) => {
+  const width = Math.round(screen * 0.68);
+  return { width, height: Math.round((width * 9) / 16) };
+};
+
+/** Flutter `HomeMusicCard` — Just In / Faith Hits rails: cover + one-line title. Square (audio) covers sit centred over a blur. */
 export const MusicCard = memo(function MusicCard({ podcast, onPress }: { podcast: Podcast; onPress: (p: Podcast) => void }) {
   const { width: screen } = useWindowDimensions();
-  const w = screen / 2 - 50;
+  const { width: w, height: h } = musicCardSize(screen);
   return (
     <Touchable onPress={() => onPress(podcast)} style={{ width: w }} accessibilityLabel={podcast.title}>
-      <Artwork uri={podcast.coverImage} width={w} height={w} radius={8}>
+      <Artwork uri={podcast.coverImage} width={w} height={h} radius={8} fit="contain">
         <View className="absolute bottom-1.5 right-1.5 flex-row items-center gap-1 rounded-xs bg-black/60 px-1.5 py-0.5">
           {isVideo(podcast) ? <Video size={10} color={colors.white} /> : null}
           <AppText variant="caption" tone="white" className="text-[10px]">
@@ -81,7 +90,7 @@ export const SeriesCard = memo(function SeriesCard({ album, width, onPress }: { 
 export const GridCard = memo(function GridCard({ podcast, width, onPress }: { podcast: Podcast; width: number; onPress: (p: Podcast) => void }) {
   return (
     <Touchable onPress={() => onPress(podcast)} style={{ width }} accessibilityLabel={podcast.title}>
-      <Artwork uri={podcast.coverImage} width={width} height={width} radius={8}>
+      <Artwork uri={podcast.coverImage} width={width} height={width} radius={8} fit="contain">
         {isVideo(podcast) ? (
           <View className="absolute left-1.5 top-1.5 rounded-xs bg-black/60 p-1">
             <Video size={11} color={colors.white} />
