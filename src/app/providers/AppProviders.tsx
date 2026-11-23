@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store } from '@/store';
+import { navigationRef } from '../navigation/navigationRef';
 import { colors, fonts } from '@/theme';
 
 const navTheme: Theme = {
@@ -49,7 +50,7 @@ export function AppProviders({ children, onReady }: { children: ReactNode; onRea
       <SafeAreaProvider>
         <Provider store={store}>
           <PersistGate loading={null} persistor={persistor}>
-            <NavigationContainer theme={navTheme} linking={linking} onReady={onReady}>
+            <NavigationContainer ref={navigationRef} theme={navTheme} linking={linking} onReady={onReady}>
               {children}
             </NavigationContainer>
           </PersistGate>

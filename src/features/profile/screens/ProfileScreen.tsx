@@ -15,6 +15,7 @@ import { baseApi } from '@/store/api/baseApi';
 import { useAppDispatch, useAppSelector, useIsCreator } from '@/store/hooks';
 import { loggedOut, selectCreatorApproved, selectProfile } from '@/store/slices/authSlice';
 import { colors, GUTTER, shadow } from '@/theme';
+import { unregisterPushDevice } from '@/services/push/pushNotifications';
 
 /** Flutter `ProfileStatusCard`: icon + label row on a dark card. */
 const ProfileRow = ({ icon: Icon, label, onPress, danger }: { icon: LucideIcon; label: string; onPress: () => void; danger?: boolean }) => (
@@ -34,7 +35,9 @@ export function ProfileScreen({ navigation }: TabScreenProps<'Profile'>) {
   const creatorApproved = useAppSelector(selectCreatorApproved);
   const dispatch = useAppDispatch();
   const isCreator = useIsCreator();
-  const signOut = () => {
+  const signOut = async () => {
+    // While the token is still valid: stop this account's pushes on this phone.
+    await unregisterPushDevice();
     dispatch(loggedOut());
     dispatch(baseApi.util.resetApiState());
   };
@@ -48,7 +51,7 @@ export function ProfileScreen({ navigation }: TabScreenProps<'Profile'>) {
         style: 'destructive',
         onPress: () => {
           usePlayerStore.getState().stop();
-          signOut();
+          void signOut();
         },
       },
     ]);

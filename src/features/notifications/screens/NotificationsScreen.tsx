@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
-import { Bell, CreditCard, Megaphone, MessageCircle, Radio } from 'lucide-react-native';
+import { BadgeCheck, Bell, CreditCard, Megaphone, MessageCircle, Radio } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, View } from 'react-native';
@@ -11,10 +11,8 @@ import { Touchable } from '@/components/common/Touchable';
 import { ListSkeleton } from '@/components/layouts/ListSkeleton';
 import { ScreenHeader } from '@/components/layouts/ScreenHeader';
 import { Screen } from '@/components/layouts/Screen';
-import { useMediaActions } from '@/hooks/useMediaActions';
-import { flattenNotifications, useDeleteNotificationMutation, useGetNotificationsInfiniteQuery, useMarkNotificationsSeenMutation } from '@/store/api/notificationsApi';
-import { reelsApi } from '@/store/api/reelsApi';
-import { useAppDispatch } from '@/store/hooks';
+import { openNotificationTarget } from '@/services/push/openNotificationTarget';
+import { flattenNotifications, useDeleteNotificationMutation, useGetNotificationsInfiniteQuery, useMarkNotificationReadMutation, useMarkNotificationsSeenMutation } from '@/store/api/notificationsApi';
 import { colors, GUTTER } from '@/theme';
 import type { AppNotification, NotificationType } from '@/types/models';
 import { timeAgo } from '@/utils/format';
@@ -25,10 +23,9 @@ const ICONS: Partial<Record<NotificationType, { icon: LucideIcon; tint: string }
   PAYMENT: { icon: CreditCard, tint: colors.gold },
   FEEDBACK: { icon: Bell, tint: '#7FB2FF' },
   COMMENT: { icon: MessageCircle, tint: '#7FD1AE' },
+  CREATOR_APPROVED: { icon: BadgeCheck, tint: '#7FD1AE' },
 };
 const DEFAULT_ICON = { icon: Bell, tint: colors.brand[400] };
-/** Types whose `redirectId` is a podcast / clip id. */
-const OPENS_PODCAST = new Set<NotificationType>(['COMMENT', 'GENERAL']);
 const Gap = () => <View className="h-2.5" />;
 
 /**
@@ -36,12 +33,11 @@ const Gap = () => <View className="h-2.5" />;
  * everything seen (that also clears the home badge). Long-press to delete.
  */
 export function NotificationsScreen({ navigation }: RootScreenProps<'Notifications'>) {
-  const dispatch = useAppDispatch();
   const query = useGetNotificationsInfiniteQuery();
   const items = useMemo(() => flattenNotifications(query.data?.pages), [query.data?.pages]);
   const [markSeen] = useMarkNotificationsSeenMutation();
   const [deleteNotification] = useDeleteNotificationMutation();
-  const { play } = useMediaActions();
+  const [markRead] = useMarkNotificationReadMutation();
   const [opening, setOpening] = useState<string>();
 
   const { refetch, hasNextPage, isFetchingNextPage, fetchNextPage } = query;
@@ -66,23 +62,20 @@ export function NotificationsScreen({ navigation }: RootScreenProps<'Notificatio
     }
   }, [refetch]);
 
-  /** A podcast/clip notification opens it (clip → reels, episode → player). */
+  /** Mark it read and open what it points at (same routing as a push tap). */
   const open = useCallback(
     async (n: AppNotification) => {
-      if (!n.redirectId || !OPENS_PODCAST.has(n.type)) return;
+      if (!n.isSeen) void markRead(n._id);
+      const target = n.data ?? (n.redirectId ? { entity: 'PODCAST' as const, entityId: n.redirectId } : undefined);
+      if (!target || target.entity === 'NONE') return;
       setOpening(n._id);
-      const request = dispatch(reelsApi.endpoints.getClip.initiate(n.redirectId));
       try {
-        const podcast = await request.unwrap();
-        play(podcast);
-      } catch {
-        Alert.alert('Not available', 'This message is no longer available.');
+        await openNotificationTarget(target);
       } finally {
-        request.unsubscribe();
         setOpening(undefined);
       }
     },
-    [dispatch, play],
+    [markRead],
   );
 
   const confirmDelete = useCallback(

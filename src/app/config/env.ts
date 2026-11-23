@@ -9,4 +9,6 @@ export const env = {
    * HTTP repositories are written. Set EXPO_PUBLIC_USE_MOCKS=false once they exist.
    */
   useMocks: process.env.EXPO_PUBLIC_USE_MOCKS !== 'false',
+  /** OneSignal App ID (dashboard → Settings → Keys & IDs). Empty = push turned off (in-app notifications still work). */
+  oneSignalAppId: process.env.EXPO_PUBLIC_ONESIGNAL_APP_ID ?? '',
 } as const;

@@ -78,8 +78,10 @@ export const endpoints = {
     mine: '/notification/get-notifications',
     unseenCount: '/notification/unseen-count',
     markSeen: '/notification/see-notifications',
+    markOneSeen: (id: string) => `/notification/see-notification/${id}`,
     remove: (id: string) => `/notification/delete-notification/${id}`,
   },
+  device: { register: '/device/register', unregister: '/device/unregister' },
   feedback: { create: '/feedback/create-feedback' },
   banner: { active: '/banner/get-all' },
   content: {

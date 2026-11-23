@@ -264,14 +264,24 @@ export interface Comment {
   replies?: Comment[];
 }
 
-export type NotificationType = 'GENERAL' | 'LIVE_INVITATION' | 'PAYMENT' | 'FEEDBACK' | 'COMMENT' | 'COURSE' | 'CLASS' | 'ORDER';
+export type NotificationType = 'GENERAL' | 'LIVE_INVITATION' | 'PAYMENT' | 'FEEDBACK' | 'COMMENT' | 'CREATOR_APPROVED' | 'REPORT' | 'COURSE' | 'CLASS' | 'ORDER';
+
+/** What a notification (or its push) opens. */
+export type NotificationEntity = 'PODCAST' | 'LIVE_ROOM' | 'FEEDBACK' | 'CREATOR' | 'REPORT' | 'NONE';
+export interface NotificationData {
+  entity: NotificationEntity;
+  entityId?: string | null;
+  meta?: Record<string, unknown>;
+}
 
 export interface AppNotification {
   _id: ID;
   title: string;
   message: string;
   type: NotificationType;
-  /** Podcast id for COMMENT; otherwise whatever the sender set. */
+  /** Deep link (entity + id). */
+  data?: NotificationData;
+  /** @deprecated same as `data.entityId` (older servers). */
   redirectId?: string | null;
   /** Seen by the signed-in user. */
   isSeen: boolean;

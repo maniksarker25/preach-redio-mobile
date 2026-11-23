@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { createNativeStackNavigator, type NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { OnboardingScreen } from '@/features/auth/screens/OnboardingScreen';
 import { CreateSheetScreen } from '@/features/creator/screens/CreateSheetScreen';
@@ -31,7 +32,8 @@ import { ContentPageScreen, FaqScreen, SupportScreen } from '@/features/settings
 import { SettingsScreen } from '@/features/settings/screens/SettingsScreen';
 import { useGetMyProfileQuery } from '@/store/api/authApi';
 import { useAppSelector } from '@/store/hooks';
-import { selectHasOnboarded, selectIsAuthenticated } from '@/store/slices/authSlice';
+import { selectCurrentUser, selectHasOnboarded, selectIsAuthenticated } from '@/store/slices/authSlice';
+import { onPushSignedIn, onPushSignedOut } from '@/services/push/pushNotifications';
 import { colors } from '@/theme';
 import { AuthNavigator } from './AuthNavigator';
 import { MainTabs } from './MainTabs';
@@ -65,6 +67,13 @@ export function RootNavigator() {
   const hasOnboarded = useAppSelector(selectHasOnboarded);
   // Refresh the saved profile on launch; an expired session is refreshed or logged out by the base query.
   useGetMyProfileQuery(undefined, { skip: !signedIn });
+
+  // Push: link this install to the signed-in account (every launch, idempotent); unlink when the session ends.
+  const profileId = useAppSelector(selectCurrentUser)?.profileId;
+  useEffect(() => {
+    if (signedIn && profileId) void onPushSignedIn(profileId);
+    else onPushSignedOut();
+  }, [signedIn, profileId]);
 
   return (
     <Stack.Navigator
